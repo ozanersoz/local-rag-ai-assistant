@@ -49,6 +49,8 @@ def main() -> None:
                 f"Indexed {stats['documents']} documents and {stats['chunks']} chunks "
                 f"into {DB_PATH.name} using {stats['embedding_provider']} embeddings."
             )
+            if args.reindex and not args.ask:
+                return
 
         if args.ask:
             contexts = retrieve(
