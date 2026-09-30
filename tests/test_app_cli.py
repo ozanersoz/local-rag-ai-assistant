@@ -13,11 +13,16 @@ class AppCliTests(unittest.TestCase):
         with patch("sys.argv", ["app.py", "--reindex"]), patch(
             "app.build_index",
             return_value={"documents": 1, "chunks": 2, "embedding_provider": "foundry"},
-        ) as build_index, patch("builtins.input", side_effect=AssertionError("input should not be called")):
-            with redirect_stdout(io.StringIO()):
+        ) as build_index, patch("app.retrieve") as retrieve, patch("app.generate_answer") as generate_answer, patch(
+            "builtins.input", side_effect=AssertionError("input should not be called")
+        ):
+            with redirect_stdout(io.StringIO()) as stdout:
                 app.main()
 
         build_index.assert_called_once()
+        retrieve.assert_not_called()
+        generate_answer.assert_not_called()
+        self.assertIn("Reindex complete", stdout.getvalue())
 
     def test_ask_passes_top_k_to_retriever(self) -> None:
         with patch("sys.argv", ["app.py", "--ask", "What is Mercosur?", "--top-k", "8"]), patch(

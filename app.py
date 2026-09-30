@@ -45,7 +45,7 @@ def main() -> None:
     args = parser.parse_args()
 
     try:
-        if args.reindex or not DB_PATH.exists():
+        if args.reindex:
             stats = build_index(
                 DATA_DIR,
                 DB_PATH,
@@ -55,8 +55,19 @@ def main() -> None:
                 f"Indexed {stats['documents']} documents and {stats['chunks']} chunks "
                 f"into {DB_PATH.name} using {stats['embedding_provider']} embeddings."
             )
-            if args.reindex and not args.ask:
-                return
+            print("Reindex complete. Exiting because --reindex was provided.")
+            return
+
+        if not DB_PATH.exists():
+            stats = build_index(
+                DATA_DIR,
+                DB_PATH,
+                allow_local_embeddings=args.allow_local_embeddings,
+            )
+            print(
+                f"Indexed {stats['documents']} documents and {stats['chunks']} chunks "
+                f"into {DB_PATH.name} using {stats['embedding_provider']} embeddings."
+            )
 
         if args.ask:
             contexts = retrieve(
