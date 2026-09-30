@@ -104,6 +104,18 @@ If `phi3.5` is not the exact cached model name on the Lenovo, list the local Fou
 foundry model list
 ```
 
+For embedding model names, try:
+
+```powershell
+foundry model list --type embedding
+```
+
+If your Foundry CLI does not support `--type embedding`, use:
+
+```powershell
+foundry model list
+```
+
 Set environment variables in PowerShell:
 
 ```powershell
@@ -125,6 +137,12 @@ Rebuild the index and ask a question:
 ```powershell
 python app.py --reindex
 python app.py --ask "Which countries in South America are landlocked?" --require-foundry-generation
+```
+
+Before running the full app, you can directly test both Foundry endpoints:
+
+```powershell
+python diagnose_foundry.py
 ```
 
 Use a different Foundry model:
@@ -243,6 +261,7 @@ If reindexing fails with a Foundry embedding error, run:
 foundry model list
 foundry model load qwen3-embedding-0.6b
 $env:FOUNDRY_LOCAL_EMBEDDING_MODEL = "qwen3-embedding-0.6b"
+python diagnose_foundry.py
 python app.py --reindex
 ```
 

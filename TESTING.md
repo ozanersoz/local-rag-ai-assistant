@@ -27,6 +27,16 @@ On macOS/Linux you can also use `python3` instead of `python`.
 - Vector retrieval
 - Answer generation using retrieved evidence
 
+## Foundry Endpoint Diagnostic
+
+On the Lenovo, after setting the Foundry environment variables, run:
+
+```powershell
+python diagnose_foundry.py
+```
+
+This directly checks `/v1/embeddings` and `/v1/chat/completions` before you run the full app.
+
 ## Manual Evaluation Questions
 
 Use these questions after reindexing:

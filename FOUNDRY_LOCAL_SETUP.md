@@ -22,6 +22,18 @@ If you are unsure of the exact cached model name, run:
 foundry model list
 ```
 
+For embedding model names, try:
+
+```powershell
+foundry model list --type embedding
+```
+
+If your Foundry CLI does not support `--type embedding`, use:
+
+```powershell
+foundry model list
+```
+
 ## Configure Environment Variables
 
 PowerShell:
@@ -41,6 +53,14 @@ set FOUNDRY_LOCAL_EMBEDDING_MODEL=qwen3-embedding-0.6b
 ```
 
 ## Run The App With Foundry Generation
+
+First diagnose both Foundry endpoints:
+
+```powershell
+python diagnose_foundry.py
+```
+
+If that says `Embedding OK` and `Chat OK`, run:
 
 ```powershell
 python app.py --reindex

@@ -4,6 +4,7 @@ import hashlib
 import json
 import math
 import os
+import urllib.error
 import urllib.request
 
 from .text import tokenize
@@ -15,6 +16,9 @@ DEFAULT_FOUNDRY_EMBEDDING_MODEL = "qwen3-embedding-0.6b"
 
 class FoundryEmbeddingError(RuntimeError):
     """Raised when Foundry embeddings are required but unavailable."""
+
+
+LAST_FOUNDRY_EMBEDDING_ERROR = ""
 
 
 def normalize(vector: list[float]) -> list[float]:
@@ -36,9 +40,14 @@ def local_embedding(text: str, dimensions: int = EMBEDDING_DIMENSIONS) -> list[f
 
 
 def foundry_embedding(text: str) -> list[float] | None:
+    global LAST_FOUNDRY_EMBEDDING_ERROR
+    LAST_FOUNDRY_EMBEDDING_ERROR = ""
     endpoint = os.getenv("FOUNDRY_LOCAL_ENDPOINT", "").rstrip("/")
     model = os.getenv("FOUNDRY_LOCAL_EMBEDDING_MODEL", DEFAULT_FOUNDRY_EMBEDDING_MODEL)
     if not endpoint or not model:
+        LAST_FOUNDRY_EMBEDDING_ERROR = (
+            "FOUNDRY_LOCAL_ENDPOINT or FOUNDRY_LOCAL_EMBEDDING_MODEL is not set."
+        )
         return None
 
     payload = {"model": model, "input": text}
@@ -52,7 +61,16 @@ def foundry_embedding(text: str) -> list[float] | None:
         with urllib.request.urlopen(request, timeout=120) as response:
             data = json.loads(response.read().decode("utf-8"))
         return normalize([float(value) for value in data["data"][0]["embedding"]])
-    except Exception:
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")
+        LAST_FOUNDRY_EMBEDDING_ERROR = (
+            f"HTTP {exc.code} from {endpoint}/v1/embeddings using model {model}: {body}"
+        )
+        return None
+    except Exception as exc:
+        LAST_FOUNDRY_EMBEDDING_ERROR = (
+            f"{type(exc).__name__} from {endpoint}/v1/embeddings using model {model}: {exc}"
+        )
         return None
 
 
@@ -65,7 +83,8 @@ def embed_with_provider(text: str, allow_local_fallback: bool = False) -> tuple[
     raise FoundryEmbeddingError(
         "Foundry embeddings are required by the worksheet, but the local "
         "Foundry embedding endpoint did not return an embedding. Check "
-        "FOUNDRY_LOCAL_ENDPOINT and FOUNDRY_LOCAL_EMBEDDING_MODEL."
+        "FOUNDRY_LOCAL_ENDPOINT and FOUNDRY_LOCAL_EMBEDDING_MODEL. "
+        f"Last Foundry error: {LAST_FOUNDRY_EMBEDDING_ERROR or 'unknown error'}"
     )
 
 
