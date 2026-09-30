@@ -15,7 +15,7 @@ The assistant has four main stages:
 
 ## Foundry Local Role
 
-Foundry Local is used for the required local AI steps. The app sends document chunks and user questions to `/v1/embeddings` using a Foundry Local embedding model, then sends retrieved context to `/v1/chat/completions` using the cached `phi-3.5-mini` chat model. A development-only local embedding fallback exists behind `--allow-local-embeddings`, but the worksheet-compliant workflow uses Foundry embeddings by default.
+Foundry Local is used for the required local AI steps. The app sends document chunks and user questions to `/v1/embeddings` using a Foundry Local embedding model, then sends retrieved context to `/v1/chat/completions` using the cached `phi-3.5-mini` chat model. A development-only local embedding and output fallback exists behind `--allow-fallback`, but the worksheet-compliant workflow uses Foundry embeddings and Foundry generation by default.
 
 ## Retrieval Design
 
@@ -27,7 +27,7 @@ The local knowledge base is expanded beyond basic country profiles. It includes 
 
 ## Local-First Design
 
-The project keeps the document collection, index, retrieval logic, and optional model calls on the user's machine. This matches the assignment goal of an offline/local assistant and allows the knowledge base to be inspected and changed without sending queries to a cloud service.
+The project keeps the document collection, index, retrieval logic, and model calls on the user's machine. This matches the assignment goal of an offline/local assistant and allows the knowledge base to be inspected and changed without sending queries to a cloud service.
 
 ## User Workflow
 

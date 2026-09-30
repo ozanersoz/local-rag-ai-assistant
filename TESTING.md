@@ -29,7 +29,7 @@ On macOS/Linux you can also use `python3` instead of `python`.
 
 ## Foundry Endpoint Diagnostic
 
-On the Lenovo, after setting the Foundry environment variables, run:
+After setting the Foundry environment variables, run:
 
 ```powershell
 python diagnose_foundry.py
@@ -52,4 +52,4 @@ python app.py --ask "What is Mercosur?"
 python app.py --ask "Why is the Amazon rainforest important?"
 ```
 
-Expected behavior: the assistant should retrieve relevant local evidence from `data/`, answer from that evidence, and list source chunks. If Foundry Local is configured, the generated answer should still stay grounded in the retrieved context.
+Expected behavior: the assistant should retrieve relevant local evidence from `data/`, send it to Foundry Local for generation, answer from that evidence, and cite source chunks. Without Foundry Local, these commands should fail unless `--allow-fallback` is explicitly provided.

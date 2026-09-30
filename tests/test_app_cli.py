@@ -39,6 +39,29 @@ class AppCliTests(unittest.TestCase):
             allow_local_embeddings=False,
         )
 
+    def test_allow_fallback_opt_in_controls_embeddings_and_output(self) -> None:
+        with patch(
+            "sys.argv",
+            ["app.py", "--ask", "What is Mercosur?", "--allow-fallback"],
+        ), patch("pathlib.Path.exists", return_value=True), patch(
+            "app.retrieve", return_value=[]
+        ) as retrieve, patch("app.generate_answer", return_value="answer") as generate_answer:
+            with redirect_stdout(io.StringIO()):
+                app.main()
+
+        retrieve.assert_called_once_with(
+            app.DB_PATH,
+            "What is Mercosur?",
+            limit=6,
+            mode="vector",
+            allow_local_embeddings=True,
+        )
+        generate_answer.assert_called_once_with(
+            "What is Mercosur?",
+            [],
+            allow_fallback_generation=True,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

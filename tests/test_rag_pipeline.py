@@ -96,7 +96,11 @@ class RagPipelineTests(unittest.TestCase):
                 self.assertTrue(results)
                 self.assertIn("Brazil", results[0]["content"])
 
-                answer = generate_answer("What is the capital of Brazil?", results)
+                answer = generate_answer(
+                    "What is the capital of Brazil?",
+                    results,
+                    allow_fallback_generation=True,
+                )
                 self.assertIn("Brasília", answer)
 
     @patch("urllib.request.urlopen", return_value=FakeChatResponse())
@@ -170,15 +174,48 @@ class RagPipelineTests(unittest.TestCase):
             self.assertEqual(results[0]["source"], "profiles.md")
             self.assertIn("Peru borders Ecuador", results[0]["content"])
 
-    def test_requires_foundry_generation_when_requested(self) -> None:
+    @patch("urllib.request.urlopen", return_value=FakeEmbeddingResponse())
+    def test_retrieval_rejects_mismatched_embedding_provider(self, _urlopen) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            data_dir = root / "data"
+            data_dir.mkdir()
+            (data_dir / "countries.md").write_text("Brazil has Brasília as its capital.", encoding="utf-8")
+            db_path = root / "rag.sqlite"
+
+            build_index(data_dir, db_path, allow_local_embeddings=True)
+
+            with patch.dict(
+                os.environ,
+                {
+                    "FOUNDRY_LOCAL_ENDPOINT": "http://foundry.test",
+                    "FOUNDRY_LOCAL_EMBEDDING_MODEL": "qwen3-embedding-0.6b",
+                },
+            ):
+                with self.assertRaises(FoundryEmbeddingError):
+                    retrieve(db_path, "What is the capital of Brazil?")
+
+    def test_requires_foundry_generation_by_default(self) -> None:
         old_endpoint = os.environ.pop("FOUNDRY_LOCAL_ENDPOINT", None)
         try:
             with self.assertRaises(FoundryGenerationError):
                 generate_answer(
                     "What is the capital of Brazil?",
                     [{"source": "test.md", "chunk": 0, "score": 1.0, "content": "Brazil has Brasília as its capital."}],
-                    require_foundry_generation=True,
                 )
+        finally:
+            if old_endpoint is not None:
+                os.environ["FOUNDRY_LOCAL_ENDPOINT"] = old_endpoint
+
+    def test_allows_extractive_generation_only_when_fallback_is_enabled(self) -> None:
+        old_endpoint = os.environ.pop("FOUNDRY_LOCAL_ENDPOINT", None)
+        try:
+            answer = generate_answer(
+                "What is the capital of Brazil?",
+                [{"source": "test.md", "chunk": 0, "score": 1.0, "content": "Brazil has Brasília as its capital."}],
+                allow_fallback_generation=True,
+            )
+            self.assertIn("Brasília", answer)
         finally:
             if old_endpoint is not None:
                 os.environ["FOUNDRY_LOCAL_ENDPOINT"] = old_endpoint

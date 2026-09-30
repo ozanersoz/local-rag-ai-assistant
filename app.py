@@ -33,14 +33,14 @@ def main() -> None:
         help="number of retrieved chunks to send to the answer step",
     )
     parser.add_argument(
-        "--allow-local-embeddings",
+        "--allow-fallback",
         action="store_true",
-        help="development fallback only; use local hash embeddings if Foundry embeddings are unavailable",
+        help="development only; allow local hash embeddings and extractive answers if Foundry is unavailable",
     )
     parser.add_argument(
         "--require-foundry-generation",
         action="store_true",
-        help="fail unless Foundry Local generates the final answer",
+        help=argparse.SUPPRESS,
     )
     args = parser.parse_args()
 
@@ -49,7 +49,7 @@ def main() -> None:
             stats = build_index(
                 DATA_DIR,
                 DB_PATH,
-                allow_local_embeddings=args.allow_local_embeddings,
+                allow_local_embeddings=args.allow_fallback,
             )
             print(
                 f"Indexed {stats['documents']} documents and {stats['chunks']} chunks "
@@ -62,7 +62,7 @@ def main() -> None:
             stats = build_index(
                 DATA_DIR,
                 DB_PATH,
-                allow_local_embeddings=args.allow_local_embeddings,
+                allow_local_embeddings=args.allow_fallback,
             )
             print(
                 f"Indexed {stats['documents']} documents and {stats['chunks']} chunks "
@@ -75,13 +75,13 @@ def main() -> None:
                 args.ask,
                 limit=args.top_k,
                 mode=args.retrieval,
-                allow_local_embeddings=args.allow_local_embeddings,
+                allow_local_embeddings=args.allow_fallback,
             )
             print(
                 generate_answer(
                     args.ask,
                     contexts,
-                    require_foundry_generation=args.require_foundry_generation,
+                    allow_fallback_generation=args.allow_fallback,
                 )
             )
             return
@@ -96,14 +96,14 @@ def main() -> None:
                 question,
                 limit=args.top_k,
                 mode=args.retrieval,
-                allow_local_embeddings=args.allow_local_embeddings,
+                allow_local_embeddings=args.allow_fallback,
             )
             print(
                 "\n"
                 + generate_answer(
                     question,
                     contexts,
-                    require_foundry_generation=args.require_foundry_generation,
+                    allow_fallback_generation=args.allow_fallback,
                 )
             )
     except (FoundryEmbeddingError, FoundryGenerationError) as exc:

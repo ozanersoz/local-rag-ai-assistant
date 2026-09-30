@@ -81,7 +81,7 @@ def embed_with_provider(text: str, allow_local_fallback: bool = False) -> tuple[
     if allow_local_fallback:
         return local_embedding(text), "local-hash"
     raise FoundryEmbeddingError(
-        "Foundry embeddings are required by the worksheet, but the local "
+        "Foundry embeddings are required by default, but the local "
         "Foundry embedding endpoint did not return an embedding. Check "
         "FOUNDRY_LOCAL_ENDPOINT and FOUNDRY_LOCAL_EMBEDDING_MODEL. "
         f"Last Foundry error: {LAST_FOUNDRY_EMBEDDING_ERROR or 'unknown error'}"

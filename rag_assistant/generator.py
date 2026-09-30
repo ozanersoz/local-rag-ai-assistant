@@ -189,13 +189,19 @@ def answer_extractive(question: str, contexts: list[dict[str, object]]) -> str:
 def generate_answer(
     question: str,
     contexts: list[dict[str, object]],
-    require_foundry_generation: bool = False,
+    allow_fallback_generation: bool = False,
+    require_foundry_generation: bool | None = None,
 ) -> str:
+    if require_foundry_generation is not None:
+        allow_fallback_generation = not require_foundry_generation
+
     foundry_answer = answer_with_foundry(
         question,
         contexts,
-        require_foundry=require_foundry_generation,
+        require_foundry=not allow_fallback_generation,
     )
     if foundry_answer:
         return foundry_answer
+    if not allow_fallback_generation:
+        raise FoundryGenerationError("Foundry generation did not return an answer.")
     return answer_extractive(question, contexts)

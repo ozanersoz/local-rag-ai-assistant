@@ -8,7 +8,7 @@ The primary workflow uses Foundry Local for:
 - Question embeddings
 - Final answer generation
 
-A development-only local embedding fallback is available, but the default and recommended path is Foundry Local.
+A development-only local embedding and output fallback is available, but the default and recommended path is Foundry Local.
 
 ## Features
 
@@ -33,7 +33,7 @@ rag_assistant/text.py          Tokenizing and chunking
 rag_assistant/embeddings.py    Foundry embeddings and explicit dev fallback
 rag_assistant/indexer.py       SQLite index builder
 rag_assistant/retriever.py     Vector and keyword retrieval
-rag_assistant/generator.py     Foundry Local or extractive answer generation
+rag_assistant/generator.py     Foundry Local generation with explicit extractive fallback
 PROJECT_WRITEUP.md             Project explanation
 PRESENTATION_OUTLINE.md        Final presentation notes
 SUBMISSION_SUMMARY.md          Short submitter summary
@@ -114,40 +114,40 @@ Build the SQLite index with Foundry embeddings:
 python app.py --reindex
 ```
 
-Ask a question with Foundry answer generation required:
+Ask a question. Foundry answer generation is required by default:
 
 ```powershell
-python app.py --ask "Which countries in South America are landlocked?" --require-foundry-generation
+python app.py --ask "Which countries in South America are landlocked?"
 ```
 
 Start interactive question mode:
 
 ```powershell
-python app.py --require-foundry-generation
+python app.py
 ```
 
 Type `quit` to exit interactive mode.
 
 ## Option 2: Run Without Foundry (Fallback Mode)
 
-This mode is for development or quick local checks only. It uses deterministic local hash embeddings instead of Foundry Local embeddings, so it should not be used when Foundry embeddings are required.
+This mode is for development or quick local checks only. It uses deterministic local hash embeddings and extractive answers instead of Foundry Local embeddings and Foundry Local generation.
 
-Build the index with the local embedding fallback:
+Build the index with the local embedding and output fallback:
 
 ```powershell
-python app.py --reindex --allow-local-embeddings
+python app.py --reindex --allow-fallback
 ```
 
-Ask a question with the fallback index:
+Ask a question with fallback embeddings and fallback output:
 
 ```powershell
-python app.py --ask "What is the capital of Brazil?" --allow-local-embeddings
+python app.py --ask "What is the capital of Brazil?" --allow-fallback
 ```
 
-Run interactive mode with fallback embeddings:
+Run interactive mode with fallback embeddings and output:
 
 ```powershell
-python app.py --allow-local-embeddings
+python app.py --allow-fallback
 ```
 
 ## Retrieval Modes
@@ -155,33 +155,33 @@ python app.py --allow-local-embeddings
 Vector retrieval is the default:
 
 ```powershell
-python app.py --ask "Which country includes the Galapagos Islands?" --require-foundry-generation
+python app.py --ask "Which country includes the Galapagos Islands?"
 ```
 
 Keyword retrieval is available for comparison:
 
 ```powershell
-python app.py --retrieval keyword --ask "Which country includes the Galapagos Islands?" --require-foundry-generation
+python app.py --retrieval keyword --ask "Which country includes the Galapagos Islands?"
 ```
 
 The app retrieves 6 chunks by default. To send more or fewer chunks to the answer step, use `--top-k`:
 
 ```powershell
-python app.py --ask "Which countries border Peru?" --top-k 8 --require-foundry-generation
+python app.py --ask "Which countries border Peru?" --top-k 8
 ```
 
 ## Demo Questions
 
 ```powershell
-python app.py --ask "Which countries in South America are landlocked?" --require-foundry-generation
-python app.py --ask "What is the capital of Brazil?" --require-foundry-generation
-python app.py --ask "Which country includes the Galapagos Islands?" --require-foundry-generation
-python app.py --ask "What language does Suriname use?" --require-foundry-generation
-python app.py --ask "Which country is the only Portuguese-speaking country in South America?" --require-foundry-generation
-python app.py --ask "Which countries border Peru?" --require-foundry-generation
-python app.py --ask "What is the Pantanal?" --require-foundry-generation
-python app.py --ask "Which countries are associated with the lithium triangle?" --require-foundry-generation
-python app.py --ask "What is Mercosur?" --require-foundry-generation
+python app.py --ask "Which countries in South America are landlocked?"
+python app.py --ask "What is the capital of Brazil?"
+python app.py --ask "Which country includes the Galapagos Islands?"
+python app.py --ask "What language does Suriname use?"
+python app.py --ask "Which country is the only Portuguese-speaking country in South America?"
+python app.py --ask "Which countries border Peru?"
+python app.py --ask "What is the Pantanal?"
+python app.py --ask "Which countries are associated with the lithium triangle?"
+python app.py --ask "What is Mercosur?"
 ```
 
 ## Testing
@@ -253,7 +253,7 @@ In another terminal, set the Foundry environment variables, then run:
 ```powershell
 python diagnose_foundry.py
 python app.py --reindex
-python app.py --ask "Which countries in South America are landlocked?" --require-foundry-generation
+python app.py --ask "Which countries in South America are landlocked?"
 ```
 
 Generated files such as `rag_index.sqlite`, `.env`, and `__pycache__/` are ignored by Git.

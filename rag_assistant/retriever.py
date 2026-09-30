@@ -5,7 +5,7 @@ import sqlite3
 from collections import Counter, defaultdict
 from pathlib import Path
 
-from .embeddings import cosine_similarity, deserialize, embed
+from .embeddings import FoundryEmbeddingError, cosine_similarity, deserialize, embed_with_provider
 from .text import tokenize
 
 
@@ -114,12 +114,15 @@ def retrieve_vector(
     limit: int = DEFAULT_TOP_K,
     allow_local_embeddings: bool = False,
 ) -> list[dict[str, object]]:
-    question_vector = embed(question, allow_local_fallback=allow_local_embeddings)
+    question_vector, query_provider = embed_with_provider(
+        question,
+        allow_local_fallback=allow_local_embeddings,
+    )
     question_terms = normalized_terms(question)
     conn = sqlite3.connect(db_path)
     rows = conn.execute(
         """
-        SELECT c.id, c.source, c.chunk_index, c.content, v.embedding
+        SELECT c.id, c.source, c.chunk_index, c.content, v.embedding, v.provider
         FROM chunks c
         JOIN vectors v ON v.chunk_id = c.id
         """
@@ -127,7 +130,16 @@ def retrieve_vector(
     conn.close()
 
     scored = []
-    for chunk_id, source, chunk_index, content, raw_vector in rows:
+    stored_providers = {row[5] for row in rows}
+    if stored_providers and stored_providers != {query_provider}:
+        expected = ", ".join(sorted(stored_providers))
+        raise FoundryEmbeddingError(
+            f"Question embedding provider is {query_provider}, but the index contains "
+            f"{expected} embeddings. Rebuild the index with `python app.py --reindex` "
+            "or use `--allow-fallback` consistently for development-only fallback mode."
+        )
+
+    for chunk_id, source, chunk_index, content, raw_vector, _provider in rows:
         vector_score = cosine_similarity(question_vector, deserialize(raw_vector))
         content_terms = normalized_terms(content)
         overlap_score = len(question_terms & content_terms) / max(1, len(question_terms))
