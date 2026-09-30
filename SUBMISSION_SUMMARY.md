@@ -14,8 +14,7 @@ Local RAG AI Assistant for South American country knowledge with Microsoft Found
 - SQLite-backed local knowledge index
 - Foundry Local vector embeddings and cosine-similarity retrieval
 - Optional keyword retrieval mode
-- Optional Foundry Local chat-completions integration
-- Required Foundry generation mode with `--require-foundry-generation`
+- Foundry Local chat-completions generation with `--require-foundry-generation`
 - Required Foundry Local embeddings integration for document and question embeddings
 - Windows-friendly Foundry Local command instructions
 - Foundry embeddings required by default for document and question vectors
@@ -35,7 +34,7 @@ Foundry Local itself must be installed separately. This project includes README 
 
 ```bash
 python3 app.py --reindex
-python3 app.py --ask "Which countries in South America are landlocked?"
+python3 app.py --ask "Which countries in South America are landlocked?" --require-foundry-generation
 ```
 
 ## Demo Script

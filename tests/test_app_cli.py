@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import io
 import unittest
+from contextlib import redirect_stdout
 from unittest.mock import patch
 
 import app
@@ -12,9 +14,25 @@ class AppCliTests(unittest.TestCase):
             "app.build_index",
             return_value={"documents": 1, "chunks": 2, "embedding_provider": "foundry"},
         ) as build_index, patch("builtins.input", side_effect=AssertionError("input should not be called")):
-            app.main()
+            with redirect_stdout(io.StringIO()):
+                app.main()
 
         build_index.assert_called_once()
+
+    def test_ask_passes_top_k_to_retriever(self) -> None:
+        with patch("sys.argv", ["app.py", "--ask", "What is Mercosur?", "--top-k", "8"]), patch(
+            "pathlib.Path.exists", return_value=True
+        ), patch("app.retrieve", return_value=[]) as retrieve, patch("app.generate_answer", return_value="answer"):
+            with redirect_stdout(io.StringIO()):
+                app.main()
+
+        retrieve.assert_called_once_with(
+            app.DB_PATH,
+            "What is Mercosur?",
+            limit=8,
+            mode="vector",
+            allow_local_embeddings=False,
+        )
 
 
 if __name__ == "__main__":

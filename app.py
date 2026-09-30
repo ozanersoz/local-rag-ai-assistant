@@ -27,6 +27,12 @@ def main() -> None:
         help="retrieval strategy to use",
     )
     parser.add_argument(
+        "--top-k",
+        type=int,
+        default=6,
+        help="number of retrieved chunks to send to the answer step",
+    )
+    parser.add_argument(
         "--allow-local-embeddings",
         action="store_true",
         help="development fallback only; use local hash embeddings if Foundry embeddings are unavailable",
@@ -56,6 +62,7 @@ def main() -> None:
             contexts = retrieve(
                 DB_PATH,
                 args.ask,
+                limit=args.top_k,
                 mode=args.retrieval,
                 allow_local_embeddings=args.allow_local_embeddings,
             )
@@ -76,6 +83,7 @@ def main() -> None:
             contexts = retrieve(
                 DB_PATH,
                 question,
+                limit=args.top_k,
                 mode=args.retrieval,
                 allow_local_embeddings=args.allow_local_embeddings,
             )

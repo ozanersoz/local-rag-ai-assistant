@@ -9,7 +9,68 @@ from .embeddings import cosine_similarity, deserialize, embed
 from .text import tokenize
 
 
-def retrieve_keyword(db_path: Path, question: str, limit: int = 4) -> list[dict[str, object]]:
+DEFAULT_TOP_K = 6
+
+STOPWORDS = {
+    "a",
+    "an",
+    "and",
+    "are",
+    "as",
+    "does",
+    "in",
+    "is",
+    "of",
+    "the",
+    "to",
+    "what",
+    "which",
+    "who",
+    "with",
+}
+
+COUNTRY_NAMES = {
+    "argentina",
+    "bolivia",
+    "brazil",
+    "chile",
+    "colombia",
+    "ecuador",
+    "guyana",
+    "paraguay",
+    "peru",
+    "suriname",
+    "uruguay",
+    "venezuela",
+}
+
+
+def normalize_term(term: str) -> str:
+    if len(term) > 4 and term.endswith("ies"):
+        return term[:-3] + "y"
+    if len(term) > 3 and term.endswith("s"):
+        return term[:-1]
+    return term
+
+
+def normalized_terms(text: str) -> set[str]:
+    return {normalize_term(token) for token in tokenize(text) if token not in STOPWORDS}
+
+
+def relation_boost(question_terms: set[str], content: str, content_terms: set[str]) -> float:
+    boost = 0.0
+    mentioned_countries = question_terms & COUNTRY_NAMES
+    if mentioned_countries and "border" in question_terms and "border" in content_terms:
+        boost += 0.2
+        lowered_content = content.lower()
+        for country in mentioned_countries:
+            if f"{country} borders" in lowered_content or f"borders {country}" in lowered_content:
+                boost += 0.5
+                break
+    return min(boost, 0.7)
+
+
+def retrieve_keyword(db_path: Path, question: str, limit: int = DEFAULT_TOP_K) -> list[dict[str, object]]:
     query_terms = Counter(tokenize(question))
     if not query_terms:
         return []
@@ -50,11 +111,11 @@ def retrieve_keyword(db_path: Path, question: str, limit: int = 4) -> list[dict[
 def retrieve_vector(
     db_path: Path,
     question: str,
-    limit: int = 4,
+    limit: int = DEFAULT_TOP_K,
     allow_local_embeddings: bool = False,
 ) -> list[dict[str, object]]:
     question_vector = embed(question, allow_local_fallback=allow_local_embeddings)
-    question_terms = set(tokenize(question))
+    question_terms = normalized_terms(question)
     conn = sqlite3.connect(db_path)
     rows = conn.execute(
         """
@@ -68,9 +129,18 @@ def retrieve_vector(
     scored = []
     for chunk_id, source, chunk_index, content, raw_vector in rows:
         vector_score = cosine_similarity(question_vector, deserialize(raw_vector))
-        content_terms = set(tokenize(content))
+        content_terms = normalized_terms(content)
         overlap_score = len(question_terms & content_terms) / max(1, len(question_terms))
-        score = (0.7 * vector_score) + (0.3 * overlap_score)
+        phrase_score = 1.0 if question.lower() in content.lower() else 0.0
+        important_terms = {term for term in question_terms if len(term) >= 5 or term in COUNTRY_NAMES}
+        rare_term_hits = sum(1 for term in important_terms if term in content_terms)
+        rare_term_score = rare_term_hits / max(1, len(important_terms))
+        score = (
+            (0.45 * vector_score)
+            + (0.25 * overlap_score)
+            + (0.2 * max(phrase_score, rare_term_score))
+            + relation_boost(question_terms, content, content_terms)
+        )
         scored.append(
             {
                 "id": chunk_id,
@@ -89,7 +159,7 @@ def retrieve_vector(
 def retrieve(
     db_path: Path,
     question: str,
-    limit: int = 4,
+    limit: int = DEFAULT_TOP_K,
     mode: str = "vector",
     allow_local_embeddings: bool = False,
 ) -> list[dict[str, object]]:

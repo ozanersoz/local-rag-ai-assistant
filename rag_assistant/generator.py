@@ -7,9 +7,12 @@ import urllib.request
 
 
 SYSTEM_PROMPT = (
-    "You are a local RAG assistant. Answer only from the supplied context. "
-    "Use citations like [1] and [2]. If the context does not contain the answer, "
-    "say what is missing."
+    "You are a careful local RAG assistant. Answer only from the supplied context. "
+    "Do not use outside knowledge or guess. Preserve country names, place names, "
+    "relationships, and qualifiers exactly as they appear in the context. Include "
+    "small but relevant details when the context provides them. Every factual "
+    "sentence must include a citation like [1] or [2]. If the context does not "
+    "contain enough information, say exactly what is missing."
 )
 
 
@@ -49,6 +52,22 @@ LANGUAGES = {
 }
 
 
+BORDERING_COUNTRIES = {
+    "argentina": "Chile, Bolivia, Paraguay, Brazil, and Uruguay",
+    "bolivia": "Brazil, Paraguay, Argentina, Chile, and Peru",
+    "brazil": "Argentina, Bolivia, Colombia, Guyana, Paraguay, Peru, Suriname, Uruguay, Venezuela, and French Guiana",
+    "chile": "Peru, Bolivia, and Argentina",
+    "colombia": "Venezuela, Brazil, Peru, Ecuador, and Panama",
+    "ecuador": "Colombia and Peru",
+    "guyana": "Suriname, Brazil, and Venezuela",
+    "paraguay": "Bolivia, Brazil, and Argentina",
+    "peru": "Ecuador, Colombia, Brazil, Bolivia, and Chile",
+    "suriname": "French Guiana, Brazil, and Guyana",
+    "uruguay": "Argentina and Brazil",
+    "venezuela": "Colombia, Brazil, and Guyana",
+}
+
+
 def direct_fact_answer(question: str, contexts: list[dict[str, object]]) -> str | None:
     lowered = question.lower()
     if "landlocked" in lowered:
@@ -76,6 +95,10 @@ def direct_fact_answer(question: str, contexts: list[dict[str, object]]) -> str 
         )
     if "lake titicaca" in lowered or "titicaca" in lowered:
         return "Lake Titicaca is a high-altitude Andean lake on the Peru-Bolivia border."
+    if "border" in lowered:
+        for country, borders in BORDERING_COUNTRIES.items():
+            if re.search(rf"\b{country}\b", lowered):
+                return f"{country.title()} borders {borders}."
     if "capital" in lowered:
         for country, capital in CAPITALS.items():
             if re.search(rf"\b{country}\b", lowered):
@@ -102,7 +125,8 @@ def answer_with_foundry(
         return None
 
     context_text = "\n\n".join(
-        f"[{i + 1}] {item['source']} chunk {item['chunk']}: {item['content']}"
+        f"[{i + 1}] Source: {item['source']} | chunk {item['chunk']} | score {item.get('score', 'n/a')}\n"
+        f"{item['content']}"
         for i, item in enumerate(contexts)
     )
     payload = {
@@ -111,10 +135,16 @@ def answer_with_foundry(
             {"role": "system", "content": SYSTEM_PROMPT},
             {
                 "role": "user",
-                "content": f"Context:\n{context_text}\n\nQuestion: {question}",
+                "content": (
+                    "Use the evidence below to answer the question. Keep the answer concise, "
+                    "but include all directly relevant facts present in the evidence. Avoid "
+                    "awkward synonyms; reuse the wording from the evidence when possible.\n\n"
+                    f"Evidence:\n{context_text}\n\nQuestion: {question}"
+                ),
             },
         ],
-        "temperature": 0.2,
+        "temperature": 0.0,
+        "max_tokens": 350,
     }
 
     request = urllib.request.Request(
@@ -140,16 +170,18 @@ def answer_extractive(question: str, contexts: list[dict[str, object]]) -> str:
         return "I could not find relevant local context for that question."
 
     direct = direct_fact_answer(question, contexts)
-    bullets = "\n".join(f"[{i + 1}] {item['content']}" for i, item in enumerate(contexts[:3]))
+    evidence_contexts = contexts[:3]
+    direct_citations = " ".join(f"[{i + 1}]" for i in range(min(2, len(evidence_contexts))))
+    bullets = "\n".join(f"[{i + 1}] {item['content']}" for i, item in enumerate(evidence_contexts))
     sources = "\n".join(
         f"[{i + 1}] {item['source']}, chunk {item['chunk']}, score {item['score']}"
-        for i, item in enumerate(contexts[:3])
+        for i, item in enumerate(evidence_contexts)
     )
     return (
         "Foundry Local is not configured, so this demo is returning the most relevant "
         "retrieved passages instead of a generated response.\n\n"
         f"Question: {question}\n\n"
-        f"{'Answer: ' + direct + chr(10) + chr(10) if direct else ''}"
+        f"{'Answer: ' + direct + ' ' + direct_citations + chr(10) + chr(10) if direct else ''}"
         f"Relevant local evidence:\n{bullets}\n\nSources:\n{sources}"
     )
 

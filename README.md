@@ -164,6 +164,12 @@ Keyword retrieval is available for comparison:
 python app.py --retrieval keyword --ask "Which country includes the Galapagos Islands?" --require-foundry-generation
 ```
 
+The app retrieves 6 chunks by default. To send more or fewer chunks to the answer step, use `--top-k`:
+
+```powershell
+python app.py --ask "Which countries border Peru?" --top-k 8 --require-foundry-generation
+```
+
 ## Demo Questions
 
 ```powershell
