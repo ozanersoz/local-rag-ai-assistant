@@ -16,8 +16,7 @@ Local RAG AI Assistant for South American country knowledge with Microsoft Found
 - Optional keyword retrieval mode
 - Optional Foundry Local chat-completions integration
 - Optional Foundry Local embeddings integration
-- Foundry Local startup script
-- Foundry Local demo run script
+- Windows-friendly Foundry Local command instructions
 - Required Foundry embedding mode with `--require-foundry-embeddings`
 - Source-cited answers
 - README with run instructions
@@ -25,10 +24,11 @@ Local RAG AI Assistant for South American country knowledge with Microsoft Found
 - Presentation outline
 - Automated tests
 - Evaluation question set
+- Windows test runner: `run_tests.bat`
 
 ## Runtime Note
 
-Foundry Local itself must be installed separately. This project includes `start_foundry_local.sh` and `run_with_foundry.sh` to start the local server, load a model, configure environment variables, and run the app once Foundry Local is installed.
+Foundry Local itself must be installed separately. This project includes README and `FOUNDRY_LOCAL_SETUP.md` commands for starting the local server, loading a model, configuring environment variables, and running the app on Windows.
 
 ## Quick Demo Command
 
@@ -44,5 +44,5 @@ This project implements the local RAG pipeline from the task sheet using a South
 ## Test Command
 
 ```bash
-./run_tests.sh
+python -m unittest discover -s tests -p "test_*.py"
 ```

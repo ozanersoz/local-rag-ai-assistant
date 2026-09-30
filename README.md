@@ -35,20 +35,23 @@ PRESENTATION_OUTLINE.md        Final presentation notes
 SUBMISSION_SUMMARY.md          Short submitter summary
 TESTING.md                     Test and evaluation instructions
 EVALUATION_QUESTIONS.md        Demo questions and expected answers
+run_tests.bat                  Windows test runner
 ```
 
 ## How To Run
 
-Open Terminal and go to the project folder:
+Open a terminal and go to the project folder.
+
+macOS example:
 
 ```bash
 cd /Users/Student/Desktop/local-rag
 ```
 
-If you cloned this from GitHub onto a different computer, go to that cloned folder instead:
+Windows/Lenovo example after cloning:
 
-```bash
-cd local-rag
+```powershell
+cd local-rag-ai-assistant
 ```
 
 ### Option 1: Run Without Foundry Local
@@ -61,16 +64,22 @@ Build or refresh the local SQLite index:
 python3 app.py --reindex
 ```
 
+On Windows, use `python` if `python3` is not available:
+
+```powershell
+python app.py --reindex
+```
+
 Ask a question:
 
-```bash
+```powershell
 python3 app.py --ask "Which countries in South America are landlocked?"
 python3 app.py --ask "What is the capital of Brazil?"
 ```
 
 Use interactive mode:
 
-```bash
+```powershell
 python3 app.py
 ```
 
@@ -80,65 +89,67 @@ Then type questions one at a time. Type `quit` to exit.
 
 This mode uses Foundry Local for generated answers after retrieval. Foundry Local must already be installed so the `foundry` command is available.
 
-Start Foundry Local, load the default model, and create `.foundry.env`:
+Start Foundry Local and load the default model:
 
-```bash
-./start_foundry_local.sh
+```powershell
+foundry server start --port 39839 --idle-timeout 0
+foundry model load qwen3-0.6b
 ```
 
-Load the environment variables into the current terminal:
+Set environment variables in PowerShell:
 
-```bash
-source .foundry.env
+```powershell
+$env:FOUNDRY_LOCAL_ENDPOINT = "http://127.0.0.1:39839"
+$env:FOUNDRY_LOCAL_MODEL = "qwen3-0.6b"
+```
+
+If you use Command Prompt instead:
+
+```bat
+set FOUNDRY_LOCAL_ENDPOINT=http://127.0.0.1:39839
+set FOUNDRY_LOCAL_MODEL=qwen3-0.6b
 ```
 
 Rebuild the index and ask a question:
 
-```bash
-python3 app.py --reindex
-python3 app.py --ask "Which countries in South America are landlocked?"
-```
-
-Or run the combined Foundry demo script:
-
-```bash
-./run_with_foundry.sh
+```powershell
+python app.py --reindex
+python app.py --ask "Which countries in South America are landlocked?"
 ```
 
 Use a different Foundry model:
 
-```bash
-FOUNDRY_LOCAL_MODEL="your-model-name" ./start_foundry_local.sh
-source .foundry.env
-python3 app.py --ask "What is the capital of Chile?"
+```powershell
+foundry model load your-model-name
+$env:FOUNDRY_LOCAL_MODEL = "your-model-name"
+python app.py --ask "What is the capital of Chile?"
 ```
 
 Require Foundry Local embeddings instead of the fallback embedding method:
 
-```bash
-source .foundry.env
-export FOUNDRY_LOCAL_EMBEDDING_MODEL="your-embedding-model"
-python3 app.py --reindex --require-foundry-embeddings
-python3 app.py --ask "What is Mercosur?" --require-foundry-embeddings
+```powershell
+$env:FOUNDRY_LOCAL_EMBEDDING_MODEL = "your-embedding-model"
+python app.py --reindex --require-foundry-embeddings
+python app.py --ask "What is Mercosur?" --require-foundry-embeddings
 ```
 
 ### Option 3: Compare Retrieval Modes
 
 Default vector retrieval:
 
-```bash
+```powershell
 python3 app.py --ask "Which country includes the Galápagos Islands?"
 ```
 
 Keyword retrieval:
 
-```bash
+```powershell
 python3 app.py --retrieval keyword --ask "Which country includes the Galápagos Islands?"
 ```
 
 ## Demo Questions
 
-```bash
+```powershell
 python3 app.py --ask "Which countries in South America are landlocked?"
 python3 app.py --ask "What is the capital of Brazil?"
 python3 app.py --ask "Which country includes the Galapagos Islands?"
@@ -154,14 +165,14 @@ python3 app.py --ask "What is Mercosur?"
 
 Run the automated tests:
 
-```bash
-./run_tests.sh
+```powershell
+python -m unittest discover -s tests -p "test_*.py"
 ```
 
-Or:
+Or run the Windows helper:
 
-```bash
-python3 -m unittest discover -s tests -p "test_*.py"
+```bat
+run_tests.bat
 ```
 
 See `TESTING.md` and `EVALUATION_QUESTIONS.md` for the testing/evaluation plan.
@@ -170,7 +181,7 @@ See `TESTING.md` and `EVALUATION_QUESTIONS.md` for the testing/evaluation plan.
 
 Run this whenever you change files in `data/`:
 
-```bash
+```powershell
 python3 app.py --reindex
 ```
 
@@ -185,28 +196,22 @@ foundry server start --port 39839 --idle-timeout 0
 foundry model load qwen3-0.6b
 ```
 
-It writes:
-
-```bash
-.foundry.env
-```
-
 The Python app reads:
 
-```bash
+```powershell
 FOUNDRY_LOCAL_ENDPOINT
 FOUNDRY_LOCAL_MODEL
 FOUNDRY_LOCAL_EMBEDDING_MODEL
 ```
 
-Manual Foundry environment setup:
+PowerShell Foundry environment setup:
 
-```bash
-export FOUNDRY_LOCAL_ENDPOINT="http://127.0.0.1:39839"
-export FOUNDRY_LOCAL_MODEL="qwen3-0.6b"
-export FOUNDRY_LOCAL_EMBEDDING_MODEL="your-embedding-model"
-python3 app.py --reindex
-python3 app.py --ask "Which country has Brasília as its capital?"
+```powershell
+$env:FOUNDRY_LOCAL_ENDPOINT = "http://127.0.0.1:39839"
+$env:FOUNDRY_LOCAL_MODEL = "qwen3-0.6b"
+$env:FOUNDRY_LOCAL_EMBEDDING_MODEL = "your-embedding-model"
+python app.py --reindex
+python app.py --ask "Which country has Brasília as its capital?"
 ```
 
 If the embedding model is not configured, the app uses its built-in local hashed embedding method so the project remains runnable on any Python 3 installation.
@@ -217,18 +222,19 @@ If the worksheet/demo requires real Foundry embeddings, use `--require-foundry-e
 
 If `python3` is not found, install Python 3 or try `python app.py` depending on your system.
 
-If `./start_foundry_local.sh` says `foundry` was not found, install Foundry Local first and reopen Terminal.
+If `foundry` was not found, install Foundry Local first and reopen PowerShell.
 
 If Foundry Local starts but the app still uses fallback mode, run:
 
-```bash
-source .foundry.env
-python3 app.py --ask "What is the capital of Brazil?"
+```powershell
+$env:FOUNDRY_LOCAL_ENDPOINT = "http://127.0.0.1:39839"
+$env:FOUNDRY_LOCAL_MODEL = "qwen3-0.6b"
+python app.py --ask "What is the capital of Brazil?"
 ```
 
 If you changed the knowledge base but answers still look old, run:
 
-```bash
+```powershell
 python3 app.py --reindex
 ```
 
@@ -248,23 +254,19 @@ git push -u origin main
 
 On the Lenovo laptop with Foundry Local:
 
-```bash
-git clone https://github.com/YOUR-USERNAME/YOUR-REPO-NAME.git
-cd YOUR-REPO-NAME
-python3 app.py --reindex
-./start_foundry_local.sh
-source .foundry.env
-python3 app.py --ask "Which countries in South America are landlocked?"
+```powershell
+git clone git@github.com:ozanersoz/local-rag-ai-assistant.git
+cd local-rag-ai-assistant
+foundry server start --port 39839 --idle-timeout 0
+foundry model load qwen3-0.6b
+$env:FOUNDRY_LOCAL_ENDPOINT = "http://127.0.0.1:39839"
+$env:FOUNDRY_LOCAL_MODEL = "qwen3-0.6b"
+python app.py --reindex
+python app.py --ask "Which countries in South America are landlocked?"
 ```
 
-If `./start_foundry_local.sh` is not executable after cloning, run:
+Generated files such as `rag_index.sqlite`, `.env`, and `__pycache__/` are intentionally ignored by Git. Rebuild the SQLite index on each machine with:
 
-```bash
-chmod +x start_foundry_local.sh run_with_foundry.sh run_demo.sh
-```
-
-Generated files such as `rag_index.sqlite`, `.foundry.env`, and `__pycache__/` are intentionally ignored by Git. Rebuild the SQLite index on each machine with:
-
-```bash
+```powershell
 python3 app.py --reindex
 ```

@@ -4,15 +4,19 @@ The project includes an automated test suite using Python's built-in `unittest` 
 
 ## Run Tests
 
-```bash
-./run_tests.sh
+PowerShell or Command Prompt:
+
+```powershell
+python -m unittest discover -s tests -p "test_*.py"
 ```
 
-Or:
+Or double-click/run:
 
-```bash
-python3 -m unittest discover -s tests -p "test_*.py"
+```bat
+run_tests.bat
 ```
+
+On macOS/Linux you can also use `python3` instead of `python`.
 
 ## What The Tests Cover
 
@@ -27,15 +31,15 @@ python3 -m unittest discover -s tests -p "test_*.py"
 
 Use these questions after reindexing:
 
-```bash
-python3 app.py --reindex
-python3 app.py --ask "Which countries in South America are landlocked?"
-python3 app.py --ask "What is the capital of Brazil?"
-python3 app.py --ask "Which country includes the Galapagos Islands?"
-python3 app.py --ask "What is the Pantanal?"
-python3 app.py --ask "Which countries are associated with the lithium triangle?"
-python3 app.py --ask "What is Mercosur?"
-python3 app.py --ask "Why is the Amazon rainforest important?"
+```powershell
+python app.py --reindex
+python app.py --ask "Which countries in South America are landlocked?"
+python app.py --ask "What is the capital of Brazil?"
+python app.py --ask "Which country includes the Galapagos Islands?"
+python app.py --ask "What is the Pantanal?"
+python app.py --ask "Which countries are associated with the lithium triangle?"
+python app.py --ask "What is Mercosur?"
+python app.py --ask "Why is the Amazon rainforest important?"
 ```
 
 Expected behavior: the assistant should retrieve relevant local evidence from `data/`, answer from that evidence, and list source chunks. If Foundry Local is configured, the generated answer should still stay grounded in the retrieved context.
