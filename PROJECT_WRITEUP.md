@@ -10,14 +10,12 @@ The assistant has four main stages:
 
 1. **Ingestion:** The app reads `.txt` and `.md` files from the `data/` folder, including South American country profiles, regional geography notes, capitals/languages notes, and source links.
 2. **Chunking:** Each document is split into overlapping passages so retrieval can return focused context.
-3. **Indexing:** Chunks are stored in SQLite with keyword weights and vector embeddings. The index records whether embeddings came from Foundry Local or the local fallback.
+3. **Indexing:** Chunks are embedded with the Foundry Local embedding model and stored in SQLite with keyword weights and vector embeddings. The index records the embedding provider.
 4. **Answering:** The user question is embedded, relevant chunks are retrieved by cosine similarity, and the answer is produced with citations.
 
 ## Foundry Local Role
 
-Foundry Local is used as the optional local AI runtime. When a local OpenAI-compatible endpoint is available, the app can send the retrieved context to `/v1/chat/completions` and use a local model to generate the final answer. It can also use `/v1/embeddings` for embeddings if an embedding model is configured. When Foundry Local is not running, the application still works by using a built-in local embedding fallback and extractive answer mode.
-
-For a stricter worksheet demo, the command-line flag `--require-foundry-embeddings` forces the app to use Foundry Local embeddings and fail if the embedding endpoint is unavailable.
+Foundry Local is used for the required local AI steps. The app sends document chunks and user questions to `/v1/embeddings` using a Foundry Local embedding model, then sends retrieved context to `/v1/chat/completions` using the cached `phi3.5` chat model. A development-only local embedding fallback exists behind `--allow-local-embeddings`, but the worksheet-compliant workflow uses Foundry embeddings by default.
 
 ## Retrieval Design
 

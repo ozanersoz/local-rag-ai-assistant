@@ -21,8 +21,8 @@ On macOS/Linux you can also use `python3` instead of `python`.
 ## What The Tests Cover
 
 - Tokenization and document chunking
-- Local embedding vector normalization
-- Failure behavior when Foundry embeddings are required but unavailable
+- Foundry embedding failure behavior when the endpoint is unavailable
+- Mocked Foundry embedding indexing and retrieval
 - SQLite indexing
 - Vector retrieval
 - Answer generation using retrieved evidence
@@ -43,4 +43,3 @@ python app.py --ask "Why is the Amazon rainforest important?"
 ```
 
 Expected behavior: the assistant should retrieve relevant local evidence from `data/`, answer from that evidence, and list source chunks. If Foundry Local is configured, the generated answer should still stay grounded in the retrieved context.
-

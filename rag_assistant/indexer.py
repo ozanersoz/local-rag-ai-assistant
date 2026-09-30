@@ -56,7 +56,7 @@ def document_paths(data_dir: Path) -> list[Path]:
     )
 
 
-def build_index(data_dir: Path, db_path: Path, require_foundry_embeddings: bool = False) -> dict[str, int | str]:
+def build_index(data_dir: Path, db_path: Path, allow_local_embeddings: bool = False) -> dict[str, int | str]:
     conn = connect(db_path)
     conn.execute("DELETE FROM vectors")
     conn.execute("DELETE FROM terms")
@@ -87,7 +87,7 @@ def build_index(data_dir: Path, db_path: Path, require_foundry_embeddings: bool 
         chunk_id = cur.lastrowid
         vector, provider = embed_with_provider(
             content,
-            require_foundry=require_foundry_embeddings,
+            allow_local_fallback=allow_local_embeddings,
         )
         providers.add(provider)
         conn.execute(

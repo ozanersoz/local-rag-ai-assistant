@@ -10,6 +10,7 @@ from .text import tokenize
 
 
 EMBEDDING_DIMENSIONS = 256
+DEFAULT_FOUNDRY_EMBEDDING_MODEL = "qwen3-embedding-0.6b"
 
 
 class FoundryEmbeddingError(RuntimeError):
@@ -36,7 +37,7 @@ def local_embedding(text: str, dimensions: int = EMBEDDING_DIMENSIONS) -> list[f
 
 def foundry_embedding(text: str) -> list[float] | None:
     endpoint = os.getenv("FOUNDRY_LOCAL_ENDPOINT", "").rstrip("/")
-    model = os.getenv("FOUNDRY_LOCAL_EMBEDDING_MODEL", "")
+    model = os.getenv("FOUNDRY_LOCAL_EMBEDDING_MODEL", DEFAULT_FOUNDRY_EMBEDDING_MODEL)
     if not endpoint or not model:
         return None
 
@@ -55,20 +56,21 @@ def foundry_embedding(text: str) -> list[float] | None:
         return None
 
 
-def embed_with_provider(text: str, require_foundry: bool = False) -> tuple[list[float], str]:
+def embed_with_provider(text: str, allow_local_fallback: bool = False) -> tuple[list[float], str]:
     foundry_vector = foundry_embedding(text)
     if foundry_vector is not None:
         return foundry_vector, "foundry"
-    if require_foundry:
-        raise FoundryEmbeddingError(
-            "Foundry embeddings were required, but FOUNDRY_LOCAL_ENDPOINT and "
-            "FOUNDRY_LOCAL_EMBEDDING_MODEL did not return an embedding."
-        )
-    return local_embedding(text), "local-hash"
+    if allow_local_fallback:
+        return local_embedding(text), "local-hash"
+    raise FoundryEmbeddingError(
+        "Foundry embeddings are required by the worksheet, but the local "
+        "Foundry embedding endpoint did not return an embedding. Check "
+        "FOUNDRY_LOCAL_ENDPOINT and FOUNDRY_LOCAL_EMBEDDING_MODEL."
+    )
 
 
-def embed(text: str, require_foundry: bool = False) -> list[float]:
-    vector, _ = embed_with_provider(text, require_foundry=require_foundry)
+def embed(text: str, allow_local_fallback: bool = False) -> list[float]:
+    vector, _ = embed_with_provider(text, allow_local_fallback=allow_local_fallback)
     return vector
 
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 from rag_assistant.embeddings import FoundryEmbeddingError, embed, local_embedding
@@ -34,7 +35,7 @@ class EmbeddingTests(unittest.TestCase):
         old_model = os.environ.pop("FOUNDRY_LOCAL_EMBEDDING_MODEL", None)
         try:
             with self.assertRaises(FoundryEmbeddingError):
-                embed("Brazil", require_foundry=True)
+                embed("Brazil")
         finally:
             if old_endpoint is not None:
                 os.environ["FOUNDRY_LOCAL_ENDPOINT"] = old_endpoint
@@ -42,30 +43,60 @@ class EmbeddingTests(unittest.TestCase):
                 os.environ["FOUNDRY_LOCAL_EMBEDDING_MODEL"] = old_model
 
 
+class FakeEmbeddingResponse:
+    def __enter__(self) -> "FakeEmbeddingResponse":
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> None:
+        return None
+
+    def read(self) -> bytes:
+        return b'{"data":[{"embedding":[1.0,0.0,0.0,0.0]}]}'
+
+
 class RagPipelineTests(unittest.TestCase):
-    def test_index_retrieve_and_answer(self) -> None:
+    @patch("urllib.request.urlopen", return_value=FakeEmbeddingResponse())
+    def test_index_retrieve_and_answer_with_foundry_embeddings(self, _urlopen) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch.dict(
+                os.environ,
+                {
+                    "FOUNDRY_LOCAL_ENDPOINT": "http://127.0.0.1:39839",
+                    "FOUNDRY_LOCAL_EMBEDDING_MODEL": "qwen3-embedding-0.6b",
+                },
+            ):
+                root = Path(tmp)
+                data_dir = root / "data"
+                data_dir.mkdir()
+                (data_dir / "countries.md").write_text(
+                    "Brazil has Brasília as its capital. Ecuador includes the Galápagos Islands. "
+                    "Bolivia and Paraguay are landlocked countries in South America.",
+                    encoding="utf-8",
+                )
+                db_path = root / "rag.sqlite"
+
+                stats = build_index(data_dir, db_path)
+                self.assertEqual(stats["documents"], 1)
+                self.assertGreaterEqual(stats["chunks"], 1)
+                self.assertEqual(stats["embedding_provider"], "foundry")
+
+                results = retrieve(db_path, "What is the capital of Brazil?")
+                self.assertTrue(results)
+                self.assertIn("Brazil", results[0]["content"])
+
+                answer = generate_answer("What is the capital of Brazil?", results)
+                self.assertIn("Brasília", answer)
+
+    def test_local_embedding_fallback_is_explicit_opt_in(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             data_dir = root / "data"
             data_dir.mkdir()
-            (data_dir / "countries.md").write_text(
-                "Brazil has Brasília as its capital. Ecuador includes the Galápagos Islands. "
-                "Bolivia and Paraguay are landlocked countries in South America.",
-                encoding="utf-8",
-            )
+            (data_dir / "countries.md").write_text("Brazil has Brasília as its capital.", encoding="utf-8")
             db_path = root / "rag.sqlite"
 
-            stats = build_index(data_dir, db_path)
-            self.assertEqual(stats["documents"], 1)
-            self.assertGreaterEqual(stats["chunks"], 1)
+            stats = build_index(data_dir, db_path, allow_local_embeddings=True)
             self.assertEqual(stats["embedding_provider"], "local-hash")
-
-            results = retrieve(db_path, "What is the capital of Brazil?")
-            self.assertTrue(results)
-            self.assertIn("Brazil", results[0]["content"])
-
-            answer = generate_answer("What is the capital of Brazil?", results)
-            self.assertIn("Brasília", answer)
 
     def test_requires_foundry_generation_when_requested(self) -> None:
         old_endpoint = os.environ.pop("FOUNDRY_LOCAL_ENDPOINT", None)

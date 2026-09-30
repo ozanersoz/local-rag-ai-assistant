@@ -51,9 +51,9 @@ def retrieve_vector(
     db_path: Path,
     question: str,
     limit: int = 4,
-    require_foundry_embeddings: bool = False,
+    allow_local_embeddings: bool = False,
 ) -> list[dict[str, object]]:
-    question_vector = embed(question, require_foundry=require_foundry_embeddings)
+    question_vector = embed(question, allow_local_fallback=allow_local_embeddings)
     question_terms = set(tokenize(question))
     conn = sqlite3.connect(db_path)
     rows = conn.execute(
@@ -91,7 +91,7 @@ def retrieve(
     question: str,
     limit: int = 4,
     mode: str = "vector",
-    require_foundry_embeddings: bool = False,
+    allow_local_embeddings: bool = False,
 ) -> list[dict[str, object]]:
     if mode == "keyword":
         results = retrieve_keyword(db_path, question, limit)
@@ -102,5 +102,5 @@ def retrieve(
         db_path,
         question,
         limit,
-        require_foundry_embeddings=require_foundry_embeddings,
+        allow_local_embeddings=allow_local_embeddings,
     )

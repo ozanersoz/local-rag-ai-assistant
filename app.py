@@ -27,9 +27,9 @@ def main() -> None:
         help="retrieval strategy to use",
     )
     parser.add_argument(
-        "--require-foundry-embeddings",
+        "--allow-local-embeddings",
         action="store_true",
-        help="fail unless Foundry Local provides embeddings",
+        help="development fallback only; use local hash embeddings if Foundry embeddings are unavailable",
     )
     parser.add_argument(
         "--require-foundry-generation",
@@ -43,7 +43,7 @@ def main() -> None:
             stats = build_index(
                 DATA_DIR,
                 DB_PATH,
-                require_foundry_embeddings=args.require_foundry_embeddings,
+                allow_local_embeddings=args.allow_local_embeddings,
             )
             print(
                 f"Indexed {stats['documents']} documents and {stats['chunks']} chunks "
@@ -55,7 +55,7 @@ def main() -> None:
                 DB_PATH,
                 args.ask,
                 mode=args.retrieval,
-                require_foundry_embeddings=args.require_foundry_embeddings,
+                allow_local_embeddings=args.allow_local_embeddings,
             )
             print(
                 generate_answer(
@@ -75,7 +75,7 @@ def main() -> None:
                 DB_PATH,
                 question,
                 mode=args.retrieval,
-                require_foundry_embeddings=args.require_foundry_embeddings,
+                allow_local_embeddings=args.allow_local_embeddings,
             )
             print(
                 "\n"

@@ -1,8 +1,8 @@
 # Local RAG AI Assistant with Foundry Local
 
-This project implements a local document Q&A assistant focused on **South American country knowledge**. It follows the Retrieval-Augmented Generation workflow: ingest Wikipedia-derived country notes, chunk them, create local embeddings, store them in SQLite, retrieve the most relevant chunks, and use the retrieved evidence to answer the user's question.
+This project implements a local document Q&A assistant focused on **South American country knowledge**. It follows the Retrieval-Augmented Generation workflow: ingest Wikipedia-derived country notes, chunk them, create Foundry Local embeddings, store them in SQLite, retrieve the most relevant chunks, and use the retrieved evidence to answer the user's question.
 
-The app runs without cloud services. If Microsoft Foundry Local is available, it can call a local OpenAI-compatible endpoint for chat generation and embeddings. If Foundry Local is not running, it still demonstrates the complete local RAG retrieval pipeline with a dependency-free local embedding fallback.
+The worksheet requires Foundry Local for document embeddings, question embeddings, and final answer generation. The normal project path therefore requires a running Foundry Local server, the cached `phi3.5` chat model, and a Foundry Local embedding model such as `qwen3-embedding-0.6b`.
 
 ## Features
 
@@ -15,8 +15,8 @@ The app runs without cloud services. If Microsoft Foundry Local is available, it
 - Optional keyword retrieval mode for comparison
 - Optional Foundry Local `/v1/chat/completions` generation
 - Required Foundry generation mode with `--require-foundry-generation`
-- Optional Foundry Local `/v1/embeddings` embeddings
-- Required Foundry embedding mode with `--require-foundry-embeddings`
+- Required Foundry Local `/v1/embeddings` document and question embeddings
+- Optional development-only local embedding fallback with `--allow-local-embeddings`
 - Source citations in answers
 - Automated tests and evaluation questions
 - Command-line interactive mode and one-question demo mode
@@ -27,7 +27,7 @@ The app runs without cloud services. If Microsoft Foundry Local is available, it
 app.py                         Command-line interface
 data/                          Local knowledge-base documents
 rag_assistant/text.py          Tokenizing and chunking
-rag_assistant/embeddings.py    Local and optional Foundry embeddings
+rag_assistant/embeddings.py    Required Foundry embeddings plus explicit dev fallback
 rag_assistant/indexer.py       SQLite index builder
 rag_assistant/retriever.py     Vector and keyword retrieval
 rag_assistant/generator.py     Foundry Local or extractive answer generation
@@ -90,11 +90,12 @@ Then type questions one at a time. Type `quit` to exit.
 
 This mode uses Foundry Local for generated answers after retrieval. Foundry Local must already be installed so the `foundry` command is available.
 
-Start Foundry Local and load the cached `phi3.5` model:
+Start Foundry Local and load the cached `phi3.5` chat model plus the Foundry embedding model:
 
 ```powershell
 foundry server start --port 39839 --idle-timeout 0
 foundry model load phi3.5
+foundry model load qwen3-embedding-0.6b
 ```
 
 If `phi3.5` is not the exact cached model name on the Lenovo, list the local Foundry models and use the cached Phi 3.5 name shown there:
@@ -108,6 +109,7 @@ Set environment variables in PowerShell:
 ```powershell
 $env:FOUNDRY_LOCAL_ENDPOINT = "http://127.0.0.1:39839"
 $env:FOUNDRY_LOCAL_MODEL = "phi3.5"
+$env:FOUNDRY_LOCAL_EMBEDDING_MODEL = "qwen3-embedding-0.6b"
 ```
 
 If you use Command Prompt instead:
@@ -115,6 +117,7 @@ If you use Command Prompt instead:
 ```bat
 set FOUNDRY_LOCAL_ENDPOINT=http://127.0.0.1:39839
 set FOUNDRY_LOCAL_MODEL=phi3.5
+set FOUNDRY_LOCAL_EMBEDDING_MODEL=qwen3-embedding-0.6b
 ```
 
 Rebuild the index and ask a question:
@@ -132,15 +135,7 @@ $env:FOUNDRY_LOCAL_MODEL = "your-model-name"
 python app.py --ask "What is the capital of Chile?"
 ```
 
-Require Foundry Local embeddings instead of the fallback embedding method:
-
-```powershell
-$env:FOUNDRY_LOCAL_EMBEDDING_MODEL = "your-embedding-model"
-python app.py --reindex --require-foundry-embeddings
-python app.py --ask "What is Mercosur?" --require-foundry-embeddings
-```
-
-If Foundry embeddings are unavailable, leave `FOUNDRY_LOCAL_EMBEDDING_MODEL` unset and do not use `--require-foundry-embeddings`. The project can still require the cached `phi3.5` Foundry model for generation with `--require-foundry-generation`.
+The app uses Foundry Local embeddings by default. If the embedding endpoint is not working, `python app.py --reindex` fails with a Foundry configuration error instead of silently using fallback embeddings.
 
 ### Option 3: Compare Retrieval Modes
 
@@ -203,6 +198,7 @@ The start script runs:
 ```bash
 foundry server start --port 39839 --idle-timeout 0
 foundry model load phi3.5
+foundry model load qwen3-embedding-0.6b
 ```
 
 The Python app reads:
@@ -218,14 +214,12 @@ PowerShell Foundry environment setup:
 ```powershell
 $env:FOUNDRY_LOCAL_ENDPOINT = "http://127.0.0.1:39839"
 $env:FOUNDRY_LOCAL_MODEL = "phi3.5"
-$env:FOUNDRY_LOCAL_EMBEDDING_MODEL = "your-embedding-model"
+$env:FOUNDRY_LOCAL_EMBEDDING_MODEL = "qwen3-embedding-0.6b"
 python app.py --reindex
 python app.py --ask "Which country has Brasília as its capital?" --require-foundry-generation
 ```
 
-If the embedding model is not configured, the app uses its built-in local hashed embedding method so the project remains runnable on any Python 3 installation.
-
-If the worksheet/demo requires real Foundry embeddings, use `--require-foundry-embeddings`. In that mode, the app fails fast unless the local Foundry embedding endpoint is working.
+For development only, you can pass `--allow-local-embeddings` to use the local hash fallback. Do not use that flag for the worksheet demo because the worksheet explicitly asks for Foundry Local embeddings.
 
 ## Troubleshooting
 
@@ -233,7 +227,7 @@ If `python3` is not found, install Python 3 or try `python app.py` depending on 
 
 If `foundry` was not found, install Foundry Local first and reopen PowerShell.
 
-If Foundry Local starts but the app still uses fallback mode, run:
+If Foundry Local starts but strict generation fails, run:
 
 ```powershell
 $env:FOUNDRY_LOCAL_ENDPOINT = "http://127.0.0.1:39839"
@@ -242,6 +236,15 @@ python app.py --ask "What is the capital of Brazil?" --require-foundry-generatio
 ```
 
 If this prints `Foundry configuration error`, check that the Foundry server is still running, `FOUNDRY_LOCAL_ENDPOINT` is set to `http://127.0.0.1:39839`, and `FOUNDRY_LOCAL_MODEL` matches the exact cached Phi 3.5 model name.
+
+If reindexing fails with a Foundry embedding error, run:
+
+```powershell
+foundry model list
+foundry model load qwen3-embedding-0.6b
+$env:FOUNDRY_LOCAL_EMBEDDING_MODEL = "qwen3-embedding-0.6b"
+python app.py --reindex
+```
 
 If you changed the knowledge base but answers still look old, run:
 
@@ -270,8 +273,10 @@ git clone git@github.com:ozanersoz/local-rag-ai-assistant.git
 cd local-rag-ai-assistant
 foundry server start --port 39839 --idle-timeout 0
 foundry model load phi3.5
+foundry model load qwen3-embedding-0.6b
 $env:FOUNDRY_LOCAL_ENDPOINT = "http://127.0.0.1:39839"
 $env:FOUNDRY_LOCAL_MODEL = "phi3.5"
+$env:FOUNDRY_LOCAL_EMBEDDING_MODEL = "qwen3-embedding-0.6b"
 python app.py --reindex
 python app.py --ask "Which countries in South America are landlocked?" --require-foundry-generation
 ```
