@@ -20,7 +20,7 @@ def post_json(url: str, payload: dict[str, object]) -> dict[str, object]:
 
 def main() -> int:
     endpoint = os.getenv("FOUNDRY_LOCAL_ENDPOINT", "http://127.0.0.1:39839").rstrip("/")
-    chat_model = os.getenv("FOUNDRY_LOCAL_MODEL", "phi3.5")
+    chat_model = os.getenv("FOUNDRY_LOCAL_MODEL", "phi-3.5-mini")
     embedding_model = os.getenv("FOUNDRY_LOCAL_EMBEDDING_MODEL", "qwen3-embedding-0.6b")
 
     print(f"FOUNDRY_LOCAL_ENDPOINT={endpoint}")

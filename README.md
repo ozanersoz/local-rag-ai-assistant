@@ -2,7 +2,7 @@
 
 This project implements a local document Q&A assistant focused on **South American country knowledge**. It follows the Retrieval-Augmented Generation workflow: ingest Wikipedia-derived country notes, chunk them, create Foundry Local embeddings, store them in SQLite, retrieve the most relevant chunks, and use the retrieved evidence to answer the user's question.
 
-The worksheet requires Foundry Local for document embeddings, question embeddings, and final answer generation. The normal project path therefore requires a running Foundry Local server, the cached `phi3.5` chat model, and a Foundry Local embedding model such as `qwen3-embedding-0.6b`.
+The worksheet requires Foundry Local for document embeddings, question embeddings, and final answer generation. The normal project path therefore requires a running Foundry Local server, the cached `phi-3.5-mini` chat model, and a Foundry Local embedding model such as `qwen3-embedding-0.6b`.
 
 ## Features
 
@@ -90,15 +90,15 @@ Then type questions one at a time. Type `quit` to exit.
 
 This mode uses Foundry Local for generated answers after retrieval. Foundry Local must already be installed so the `foundry` command is available.
 
-Start Foundry Local and load the cached `phi3.5` chat model plus the Foundry embedding model:
+Start Foundry Local and load the cached `phi-3.5-mini` chat model plus the Foundry embedding model:
 
 ```powershell
 foundry server start --port 39839 --idle-timeout 0
-foundry model load phi3.5
+foundry model load phi-3.5-mini
 foundry model load qwen3-embedding-0.6b
 ```
 
-If `phi3.5` is not the exact cached model name on the Lenovo, list the local Foundry models and use the cached Phi 3.5 name shown there:
+If `phi-3.5-mini` is not the exact cached model name on the Lenovo, list the local Foundry models and use the cached Phi 3.5 name shown there:
 
 ```powershell
 foundry model list
@@ -120,7 +120,7 @@ Set environment variables in PowerShell:
 
 ```powershell
 $env:FOUNDRY_LOCAL_ENDPOINT = "http://127.0.0.1:39839"
-$env:FOUNDRY_LOCAL_MODEL = "phi3.5"
+$env:FOUNDRY_LOCAL_MODEL = "phi-3.5-mini"
 $env:FOUNDRY_LOCAL_EMBEDDING_MODEL = "qwen3-embedding-0.6b"
 ```
 
@@ -128,7 +128,7 @@ If you use Command Prompt instead:
 
 ```bat
 set FOUNDRY_LOCAL_ENDPOINT=http://127.0.0.1:39839
-set FOUNDRY_LOCAL_MODEL=phi3.5
+set FOUNDRY_LOCAL_MODEL=phi-3.5-mini
 set FOUNDRY_LOCAL_EMBEDDING_MODEL=qwen3-embedding-0.6b
 ```
 
@@ -215,7 +215,7 @@ The start script runs:
 
 ```bash
 foundry server start --port 39839 --idle-timeout 0
-foundry model load phi3.5
+foundry model load phi-3.5-mini
 foundry model load qwen3-embedding-0.6b
 ```
 
@@ -231,7 +231,7 @@ PowerShell Foundry environment setup:
 
 ```powershell
 $env:FOUNDRY_LOCAL_ENDPOINT = "http://127.0.0.1:39839"
-$env:FOUNDRY_LOCAL_MODEL = "phi3.5"
+$env:FOUNDRY_LOCAL_MODEL = "phi-3.5-mini"
 $env:FOUNDRY_LOCAL_EMBEDDING_MODEL = "qwen3-embedding-0.6b"
 python app.py --reindex
 python app.py --ask "Which country has Brasília as its capital?" --require-foundry-generation
@@ -249,7 +249,7 @@ If Foundry Local starts but strict generation fails, run:
 
 ```powershell
 $env:FOUNDRY_LOCAL_ENDPOINT = "http://127.0.0.1:39839"
-$env:FOUNDRY_LOCAL_MODEL = "phi3.5"
+$env:FOUNDRY_LOCAL_MODEL = "phi-3.5-mini"
 python app.py --ask "What is the capital of Brazil?" --require-foundry-generation
 ```
 
@@ -291,10 +291,10 @@ On the Lenovo laptop with Foundry Local:
 git clone git@github.com:ozanersoz/local-rag-ai-assistant.git
 cd local-rag-ai-assistant
 foundry server start --port 39839 --idle-timeout 0
-foundry model load phi3.5
+foundry model load phi-3.5-mini
 foundry model load qwen3-embedding-0.6b
 $env:FOUNDRY_LOCAL_ENDPOINT = "http://127.0.0.1:39839"
-$env:FOUNDRY_LOCAL_MODEL = "phi3.5"
+$env:FOUNDRY_LOCAL_MODEL = "phi-3.5-mini"
 $env:FOUNDRY_LOCAL_EMBEDDING_MODEL = "qwen3-embedding-0.6b"
 python app.py --reindex
 python app.py --ask "Which countries in South America are landlocked?" --require-foundry-generation

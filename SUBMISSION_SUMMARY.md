@@ -29,7 +29,7 @@ Local RAG AI Assistant for South American country knowledge with Microsoft Found
 
 ## Runtime Note
 
-Foundry Local itself must be installed separately. This project includes README and `FOUNDRY_LOCAL_SETUP.md` commands for starting the local server, loading the cached `phi3.5` model, configuring environment variables, and running the app on Windows.
+Foundry Local itself must be installed separately. This project includes README and `FOUNDRY_LOCAL_SETUP.md` commands for starting the local server, loading the cached `phi-3.5-mini` model, configuring environment variables, and running the app on Windows.
 
 ## Quick Demo Command
 

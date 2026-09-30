@@ -15,7 +15,7 @@ The assistant has four main stages:
 
 ## Foundry Local Role
 
-Foundry Local is used for the required local AI steps. The app sends document chunks and user questions to `/v1/embeddings` using a Foundry Local embedding model, then sends retrieved context to `/v1/chat/completions` using the cached `phi3.5` chat model. A development-only local embedding fallback exists behind `--allow-local-embeddings`, but the worksheet-compliant workflow uses Foundry embeddings by default.
+Foundry Local is used for the required local AI steps. The app sends document chunks and user questions to `/v1/embeddings` using a Foundry Local embedding model, then sends retrieved context to `/v1/chat/completions` using the cached `phi-3.5-mini` chat model. A development-only local embedding fallback exists behind `--allow-local-embeddings`, but the worksheet-compliant workflow uses Foundry embeddings by default.
 
 ## Retrieval Design
 

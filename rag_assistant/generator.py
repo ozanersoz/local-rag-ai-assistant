@@ -93,7 +93,7 @@ def answer_with_foundry(
     require_foundry: bool = False,
 ) -> str | None:
     endpoint = os.getenv("FOUNDRY_LOCAL_ENDPOINT", "").rstrip("/")
-    model = os.getenv("FOUNDRY_LOCAL_MODEL", "phi3.5")
+    model = os.getenv("FOUNDRY_LOCAL_MODEL", "phi-3.5-mini")
     if not endpoint:
         if require_foundry:
             raise FoundryGenerationError(
