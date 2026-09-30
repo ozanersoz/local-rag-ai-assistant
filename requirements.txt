@@ -1,0 +1,4 @@
+# No packages are required for the fallback local RAG demo.
+# Optional, if your environment supports the Foundry Local Python SDK:
+# foundry-local-sdk
+
