@@ -47,8 +47,13 @@ def retrieve_keyword(db_path: Path, question: str, limit: int = 4) -> list[dict[
     ]
 
 
-def retrieve_vector(db_path: Path, question: str, limit: int = 4) -> list[dict[str, object]]:
-    question_vector = embed(question)
+def retrieve_vector(
+    db_path: Path,
+    question: str,
+    limit: int = 4,
+    require_foundry_embeddings: bool = False,
+) -> list[dict[str, object]]:
+    question_vector = embed(question, require_foundry=require_foundry_embeddings)
     question_terms = set(tokenize(question))
     conn = sqlite3.connect(db_path)
     rows = conn.execute(
@@ -81,10 +86,21 @@ def retrieve_vector(db_path: Path, question: str, limit: int = 4) -> list[dict[s
     return sorted(scored, key=lambda item: item["score"], reverse=True)[:limit]
 
 
-def retrieve(db_path: Path, question: str, limit: int = 4, mode: str = "vector") -> list[dict[str, object]]:
+def retrieve(
+    db_path: Path,
+    question: str,
+    limit: int = 4,
+    mode: str = "vector",
+    require_foundry_embeddings: bool = False,
+) -> list[dict[str, object]]:
     if mode == "keyword":
         results = retrieve_keyword(db_path, question, limit)
         for item in results:
             item["retrieval"] = "keyword"
         return results
-    return retrieve_vector(db_path, question, limit)
+    return retrieve_vector(
+        db_path,
+        question,
+        limit,
+        require_foundry_embeddings=require_foundry_embeddings,
+    )

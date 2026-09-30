@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 
 
-TOKEN_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]*")
+TOKEN_RE = re.compile(r"[\w][\w-]*", re.UNICODE)
 
 
 def tokenize(text: str) -> list[str]:

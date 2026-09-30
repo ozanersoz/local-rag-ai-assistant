@@ -23,17 +23,31 @@ def main() -> None:
         default="vector",
         help="retrieval strategy to use",
     )
+    parser.add_argument(
+        "--require-foundry-embeddings",
+        action="store_true",
+        help="fail unless Foundry Local provides embeddings",
+    )
     args = parser.parse_args()
 
     if args.reindex or not DB_PATH.exists():
-        stats = build_index(DATA_DIR, DB_PATH)
+        stats = build_index(
+            DATA_DIR,
+            DB_PATH,
+            require_foundry_embeddings=args.require_foundry_embeddings,
+        )
         print(
             f"Indexed {stats['documents']} documents and {stats['chunks']} chunks "
-            f"into {DB_PATH.name}."
+            f"into {DB_PATH.name} using {stats['embedding_provider']} embeddings."
         )
 
     if args.ask:
-        contexts = retrieve(DB_PATH, args.ask, mode=args.retrieval)
+        contexts = retrieve(
+            DB_PATH,
+            args.ask,
+            mode=args.retrieval,
+            require_foundry_embeddings=args.require_foundry_embeddings,
+        )
         print(generate_answer(args.ask, contexts))
         return
 
@@ -42,7 +56,12 @@ def main() -> None:
         question = input("\nQuestion> ").strip()
         if question.lower() in {"q", "quit", "exit"}:
             break
-        contexts = retrieve(DB_PATH, question, mode=args.retrieval)
+        contexts = retrieve(
+            DB_PATH,
+            question,
+            mode=args.retrieval,
+            require_foundry_embeddings=args.require_foundry_embeddings,
+        )
         print("\n" + generate_answer(question, contexts))
 
 

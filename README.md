@@ -8,13 +8,16 @@ The app runs without cloud services. If Microsoft Foundry Local is available, it
 
 - Local document ingestion from `.txt` and `.md` files in `data/`
 - South America knowledge base built from Wikipedia country pages
+- Expanded sources covering countries, regions, ecosystems, history, languages, trade, and landmarks
 - Overlapping document chunking
 - SQLite storage for chunks, keyword weights, and vector embeddings
 - Vector retrieval by cosine similarity
 - Optional keyword retrieval mode for comparison
 - Optional Foundry Local `/v1/chat/completions` generation
 - Optional Foundry Local `/v1/embeddings` embeddings
+- Required Foundry embedding mode with `--require-foundry-embeddings`
 - Source citations in answers
+- Automated tests and evaluation questions
 - Command-line interactive mode and one-question demo mode
 
 ## Project Structure
@@ -30,6 +33,8 @@ rag_assistant/generator.py     Foundry Local or extractive answer generation
 PROJECT_WRITEUP.md             Project explanation
 PRESENTATION_OUTLINE.md        Final presentation notes
 SUBMISSION_SUMMARY.md          Short submitter summary
+TESTING.md                     Test and evaluation instructions
+EVALUATION_QUESTIONS.md        Demo questions and expected answers
 ```
 
 ## How To Run
@@ -108,6 +113,15 @@ source .foundry.env
 python3 app.py --ask "What is the capital of Chile?"
 ```
 
+Require Foundry Local embeddings instead of the fallback embedding method:
+
+```bash
+source .foundry.env
+export FOUNDRY_LOCAL_EMBEDDING_MODEL="your-embedding-model"
+python3 app.py --reindex --require-foundry-embeddings
+python3 app.py --ask "What is Mercosur?" --require-foundry-embeddings
+```
+
 ### Option 3: Compare Retrieval Modes
 
 Default vector retrieval:
@@ -131,7 +145,26 @@ python3 app.py --ask "Which country includes the Galapagos Islands?"
 python3 app.py --ask "What language does Suriname use?"
 python3 app.py --ask "Which country is the only Portuguese-speaking country in South America?"
 python3 app.py --ask "Which countries border Peru?"
+python3 app.py --ask "What is the Pantanal?"
+python3 app.py --ask "Which countries are associated with the lithium triangle?"
+python3 app.py --ask "What is Mercosur?"
 ```
+
+## Testing
+
+Run the automated tests:
+
+```bash
+./run_tests.sh
+```
+
+Or:
+
+```bash
+python3 -m unittest discover -s tests -p "test_*.py"
+```
+
+See `TESTING.md` and `EVALUATION_QUESTIONS.md` for the testing/evaluation plan.
 
 ## When To Reindex
 
@@ -177,6 +210,8 @@ python3 app.py --ask "Which country has Brasília as its capital?"
 ```
 
 If the embedding model is not configured, the app uses its built-in local hashed embedding method so the project remains runnable on any Python 3 installation.
+
+If the worksheet/demo requires real Foundry embeddings, use `--require-foundry-embeddings`. In that mode, the app fails fast unless the local Foundry embedding endpoint is working.
 
 ## Troubleshooting
 

@@ -5,7 +5,7 @@ import sqlite3
 from collections import Counter
 from pathlib import Path
 
-from .embeddings import embed, serialize
+from .embeddings import embed_with_provider, serialize
 from .text import chunk_text, tokenize
 
 
@@ -37,10 +37,14 @@ def connect(db_path: Path) -> sqlite3.Connection:
         CREATE TABLE IF NOT EXISTS vectors (
             chunk_id INTEGER PRIMARY KEY,
             embedding TEXT NOT NULL,
+            provider TEXT NOT NULL DEFAULT 'local-hash',
             FOREIGN KEY (chunk_id) REFERENCES chunks(id)
         )
         """
     )
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(vectors)").fetchall()}
+    if "provider" not in columns:
+        conn.execute("ALTER TABLE vectors ADD COLUMN provider TEXT NOT NULL DEFAULT 'local-hash'")
     return conn
 
 
@@ -52,7 +56,7 @@ def document_paths(data_dir: Path) -> list[Path]:
     )
 
 
-def build_index(data_dir: Path, db_path: Path) -> dict[str, int]:
+def build_index(data_dir: Path, db_path: Path, require_foundry_embeddings: bool = False) -> dict[str, int | str]:
     conn = connect(db_path)
     conn.execute("DELETE FROM vectors")
     conn.execute("DELETE FROM terms")
@@ -74,15 +78,21 @@ def build_index(data_dir: Path, db_path: Path) -> dict[str, int]:
         document_frequency.update(terms.keys())
 
     total_docs = len(documents)
+    providers: set[str] = set()
     for source, chunk_index, content, terms in documents:
         cur = conn.execute(
             "INSERT INTO chunks (source, chunk_index, content) VALUES (?, ?, ?)",
             (source, chunk_index, content),
         )
         chunk_id = cur.lastrowid
+        vector, provider = embed_with_provider(
+            content,
+            require_foundry=require_foundry_embeddings,
+        )
+        providers.add(provider)
         conn.execute(
-            "INSERT INTO vectors (chunk_id, embedding) VALUES (?, ?)",
-            (chunk_id, serialize(embed(content))),
+            "INSERT INTO vectors (chunk_id, embedding, provider) VALUES (?, ?, ?)",
+            (chunk_id, serialize(vector), provider),
         )
         max_tf = max(terms.values())
         for term, count in terms.items():
@@ -95,4 +105,8 @@ def build_index(data_dir: Path, db_path: Path) -> dict[str, int]:
 
     conn.commit()
     conn.close()
-    return {"documents": len(document_paths(data_dir)), "chunks": total_docs}
+    return {
+        "documents": len(document_paths(data_dir)),
+        "chunks": total_docs,
+        "embedding_provider": ",".join(sorted(providers)),
+    }

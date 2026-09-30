@@ -12,6 +12,10 @@ from .text import tokenize
 EMBEDDING_DIMENSIONS = 256
 
 
+class FoundryEmbeddingError(RuntimeError):
+    """Raised when Foundry embeddings are required but unavailable."""
+
+
 def normalize(vector: list[float]) -> list[float]:
     magnitude = math.sqrt(sum(value * value for value in vector))
     if magnitude == 0:
@@ -51,8 +55,21 @@ def foundry_embedding(text: str) -> list[float] | None:
         return None
 
 
-def embed(text: str) -> list[float]:
-    return foundry_embedding(text) or local_embedding(text)
+def embed_with_provider(text: str, require_foundry: bool = False) -> tuple[list[float], str]:
+    foundry_vector = foundry_embedding(text)
+    if foundry_vector is not None:
+        return foundry_vector, "foundry"
+    if require_foundry:
+        raise FoundryEmbeddingError(
+            "Foundry embeddings were required, but FOUNDRY_LOCAL_ENDPOINT and "
+            "FOUNDRY_LOCAL_EMBEDDING_MODEL did not return an embedding."
+        )
+    return local_embedding(text), "local-hash"
+
+
+def embed(text: str, require_foundry: bool = False) -> list[float]:
+    vector, _ = embed_with_provider(text, require_foundry=require_foundry)
+    return vector
 
 
 def serialize(vector: list[float]) -> str:
@@ -65,4 +82,3 @@ def deserialize(raw: str) -> list[float]:
 
 def cosine_similarity(left: list[float], right: list[float]) -> float:
     return sum(a * b for a, b in zip(left, right))
-

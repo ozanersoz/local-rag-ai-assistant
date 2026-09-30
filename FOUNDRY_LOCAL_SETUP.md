@@ -40,6 +40,16 @@ export FOUNDRY_LOCAL_EMBEDDING_MODEL="your-embedding-model"
 python3 app.py --reindex
 ```
 
+Strict Foundry embedding mode:
+
+```bash
+export FOUNDRY_LOCAL_EMBEDDING_MODEL="your-embedding-model"
+python3 app.py --reindex --require-foundry-embeddings
+python3 app.py --ask "What is Mercosur?" --require-foundry-embeddings
+```
+
+Use strict mode when the worksheet requires the embedding step to come from Foundry Local rather than the fallback local-hash embedding method.
+
 ## Expected Endpoints
 
 - `POST /v1/chat/completions`

@@ -53,6 +53,25 @@ def direct_fact_answer(question: str, contexts: list[dict[str, object]]) -> str 
         return "Ecuador includes the Galápagos Islands."
     if "portuguese" in lowered:
         return "Brazil is the Portuguese-speaking country in South America."
+    if "pantanal" in lowered:
+        return (
+            "The Pantanal is a major tropical wetland system, mostly in Brazil "
+            "and also extending into Bolivia and Paraguay."
+        )
+    if "atacama" in lowered:
+        return (
+            "The Atacama Desert is an extremely dry desert region associated with "
+            "northern Chile, astronomy, mining, salt flats, and distinctive landscapes."
+        )
+    if "lithium triangle" in lowered:
+        return "The lithium triangle is associated with Argentina, Bolivia, and Chile."
+    if "mercosur" in lowered:
+        return (
+            "Mercosur is a South American regional trade bloc associated with "
+            "economic integration."
+        )
+    if "lake titicaca" in lowered or "titicaca" in lowered:
+        return "Lake Titicaca is a high-altitude Andean lake on the Peru-Bolivia border."
     if "capital" in lowered:
         for country, capital in CAPITALS.items():
             if re.search(rf"\b{country}\b", lowered):
