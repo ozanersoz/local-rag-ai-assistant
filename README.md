@@ -93,10 +93,12 @@ This mode uses Foundry Local for generated answers after retrieval. Foundry Loca
 Start Foundry Local and load the cached `phi-3.5-mini` chat model plus the Foundry embedding model:
 
 ```powershell
-foundry server start --port 39839 --idle-timeout 0
+foundry server start
 foundry model load phi-3.5-mini
 foundry model load qwen3-embedding-0.6b
 ```
+
+Use the local endpoint printed by `foundry server start`. Do not assume a fixed port; Foundry may choose a different one on your laptop.
 
 If `phi-3.5-mini` is not the exact cached model name on the Lenovo, list the local Foundry models and use the cached Phi 3.5 name shown there:
 
@@ -119,7 +121,7 @@ foundry model list
 Set environment variables in PowerShell:
 
 ```powershell
-$env:FOUNDRY_LOCAL_ENDPOINT = "http://127.0.0.1:39839"
+$env:FOUNDRY_LOCAL_ENDPOINT = "http://127.0.0.1:PORT_FROM_FOUNDRY"
 $env:FOUNDRY_LOCAL_MODEL = "phi-3.5-mini"
 $env:FOUNDRY_LOCAL_EMBEDDING_MODEL = "qwen3-embedding-0.6b"
 ```
@@ -127,7 +129,7 @@ $env:FOUNDRY_LOCAL_EMBEDDING_MODEL = "qwen3-embedding-0.6b"
 If you use Command Prompt instead:
 
 ```bat
-set FOUNDRY_LOCAL_ENDPOINT=http://127.0.0.1:39839
+set FOUNDRY_LOCAL_ENDPOINT=http://127.0.0.1:PORT_FROM_FOUNDRY
 set FOUNDRY_LOCAL_MODEL=phi-3.5-mini
 set FOUNDRY_LOCAL_EMBEDDING_MODEL=qwen3-embedding-0.6b
 ```
@@ -211,10 +213,10 @@ The app stores the rebuilt index in `rag_index.sqlite`.
 
 ## Foundry Local Details
 
-The start script runs:
+Run these Foundry Local commands on the Lenovo:
 
-```bash
-foundry server start --port 39839 --idle-timeout 0
+```powershell
+foundry server start
 foundry model load phi-3.5-mini
 foundry model load qwen3-embedding-0.6b
 ```
@@ -230,7 +232,7 @@ FOUNDRY_LOCAL_EMBEDDING_MODEL
 PowerShell Foundry environment setup:
 
 ```powershell
-$env:FOUNDRY_LOCAL_ENDPOINT = "http://127.0.0.1:39839"
+$env:FOUNDRY_LOCAL_ENDPOINT = "http://127.0.0.1:PORT_FROM_FOUNDRY"
 $env:FOUNDRY_LOCAL_MODEL = "phi-3.5-mini"
 $env:FOUNDRY_LOCAL_EMBEDDING_MODEL = "qwen3-embedding-0.6b"
 python app.py --reindex
@@ -248,12 +250,12 @@ If `foundry` was not found, install Foundry Local first and reopen PowerShell.
 If Foundry Local starts but strict generation fails, run:
 
 ```powershell
-$env:FOUNDRY_LOCAL_ENDPOINT = "http://127.0.0.1:39839"
+$env:FOUNDRY_LOCAL_ENDPOINT = "http://127.0.0.1:PORT_FROM_FOUNDRY"
 $env:FOUNDRY_LOCAL_MODEL = "phi-3.5-mini"
 python app.py --ask "What is the capital of Brazil?" --require-foundry-generation
 ```
 
-If this prints `Foundry configuration error`, check that the Foundry server is still running, `FOUNDRY_LOCAL_ENDPOINT` is set to `http://127.0.0.1:39839`, and `FOUNDRY_LOCAL_MODEL` matches the exact cached Phi 3.5 model name.
+If this prints `Foundry configuration error`, check that the Foundry server is still running, `FOUNDRY_LOCAL_ENDPOINT` matches the endpoint printed by Foundry Local, and `FOUNDRY_LOCAL_MODEL` matches the exact cached Phi 3.5 model name.
 
 If reindexing fails with a Foundry embedding error, run:
 
@@ -290,10 +292,10 @@ On the Lenovo laptop with Foundry Local:
 ```powershell
 git clone git@github.com:ozanersoz/local-rag-ai-assistant.git
 cd local-rag-ai-assistant
-foundry server start --port 39839 --idle-timeout 0
+foundry server start
 foundry model load phi-3.5-mini
 foundry model load qwen3-embedding-0.6b
-$env:FOUNDRY_LOCAL_ENDPOINT = "http://127.0.0.1:39839"
+$env:FOUNDRY_LOCAL_ENDPOINT = "http://127.0.0.1:PORT_FROM_FOUNDRY"
 $env:FOUNDRY_LOCAL_MODEL = "phi-3.5-mini"
 $env:FOUNDRY_LOCAL_EMBEDDING_MODEL = "qwen3-embedding-0.6b"
 python app.py --reindex

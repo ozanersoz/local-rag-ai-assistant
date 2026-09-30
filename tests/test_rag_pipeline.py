@@ -61,7 +61,7 @@ class RagPipelineTests(unittest.TestCase):
             with patch.dict(
                 os.environ,
                 {
-                    "FOUNDRY_LOCAL_ENDPOINT": "http://127.0.0.1:39839",
+                    "FOUNDRY_LOCAL_ENDPOINT": "http://foundry.test",
                     "FOUNDRY_LOCAL_EMBEDDING_MODEL": "qwen3-embedding-0.6b",
                 },
             ):

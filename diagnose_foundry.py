@@ -19,9 +19,15 @@ def post_json(url: str, payload: dict[str, object]) -> dict[str, object]:
 
 
 def main() -> int:
-    endpoint = os.getenv("FOUNDRY_LOCAL_ENDPOINT", "http://127.0.0.1:39839").rstrip("/")
+    endpoint = os.getenv("FOUNDRY_LOCAL_ENDPOINT", "").rstrip("/")
     chat_model = os.getenv("FOUNDRY_LOCAL_MODEL", "phi-3.5-mini")
     embedding_model = os.getenv("FOUNDRY_LOCAL_EMBEDDING_MODEL", "qwen3-embedding-0.6b")
+
+    if not endpoint:
+        print("FOUNDRY_LOCAL_ENDPOINT is not set.")
+        print("Set it to the endpoint printed by Foundry Local, for example:")
+        print('$env:FOUNDRY_LOCAL_ENDPOINT = "http://127.0.0.1:PORT"')
+        return 1
 
     print(f"FOUNDRY_LOCAL_ENDPOINT={endpoint}")
     print(f"FOUNDRY_LOCAL_MODEL={chat_model}")
@@ -64,4 +70,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
