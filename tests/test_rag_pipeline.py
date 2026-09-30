@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 
 from rag_assistant.embeddings import FoundryEmbeddingError, embed, local_embedding
-from rag_assistant.generator import generate_answer
+from rag_assistant.generator import FoundryGenerationError, generate_answer
 from rag_assistant.indexer import build_index
 from rag_assistant.retriever import retrieve
 from rag_assistant.text import chunk_text, tokenize
@@ -67,7 +67,19 @@ class RagPipelineTests(unittest.TestCase):
             answer = generate_answer("What is the capital of Brazil?", results)
             self.assertIn("Brasília", answer)
 
+    def test_requires_foundry_generation_when_requested(self) -> None:
+        old_endpoint = os.environ.pop("FOUNDRY_LOCAL_ENDPOINT", None)
+        try:
+            with self.assertRaises(FoundryGenerationError):
+                generate_answer(
+                    "What is the capital of Brazil?",
+                    [{"source": "test.md", "chunk": 0, "score": 1.0, "content": "Brazil has Brasília as its capital."}],
+                    require_foundry_generation=True,
+                )
+        finally:
+            if old_endpoint is not None:
+                os.environ["FOUNDRY_LOCAL_ENDPOINT"] = old_endpoint
+
 
 if __name__ == "__main__":
     unittest.main()
-

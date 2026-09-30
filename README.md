@@ -14,6 +14,7 @@ The app runs without cloud services. If Microsoft Foundry Local is available, it
 - Vector retrieval by cosine similarity
 - Optional keyword retrieval mode for comparison
 - Optional Foundry Local `/v1/chat/completions` generation
+- Required Foundry generation mode with `--require-foundry-generation`
 - Optional Foundry Local `/v1/embeddings` embeddings
 - Required Foundry embedding mode with `--require-foundry-embeddings`
 - Source citations in answers
@@ -89,32 +90,38 @@ Then type questions one at a time. Type `quit` to exit.
 
 This mode uses Foundry Local for generated answers after retrieval. Foundry Local must already be installed so the `foundry` command is available.
 
-Start Foundry Local and load the default model:
+Start Foundry Local and load the cached `phi3.5` model:
 
 ```powershell
 foundry server start --port 39839 --idle-timeout 0
-foundry model load qwen3-0.6b
+foundry model load phi3.5
+```
+
+If `phi3.5` is not the exact cached model name on the Lenovo, list the local Foundry models and use the cached Phi 3.5 name shown there:
+
+```powershell
+foundry model list
 ```
 
 Set environment variables in PowerShell:
 
 ```powershell
 $env:FOUNDRY_LOCAL_ENDPOINT = "http://127.0.0.1:39839"
-$env:FOUNDRY_LOCAL_MODEL = "qwen3-0.6b"
+$env:FOUNDRY_LOCAL_MODEL = "phi3.5"
 ```
 
 If you use Command Prompt instead:
 
 ```bat
 set FOUNDRY_LOCAL_ENDPOINT=http://127.0.0.1:39839
-set FOUNDRY_LOCAL_MODEL=qwen3-0.6b
+set FOUNDRY_LOCAL_MODEL=phi3.5
 ```
 
 Rebuild the index and ask a question:
 
 ```powershell
 python app.py --reindex
-python app.py --ask "Which countries in South America are landlocked?"
+python app.py --ask "Which countries in South America are landlocked?" --require-foundry-generation
 ```
 
 Use a different Foundry model:
@@ -132,6 +139,8 @@ $env:FOUNDRY_LOCAL_EMBEDDING_MODEL = "your-embedding-model"
 python app.py --reindex --require-foundry-embeddings
 python app.py --ask "What is Mercosur?" --require-foundry-embeddings
 ```
+
+If Foundry embeddings are unavailable, leave `FOUNDRY_LOCAL_EMBEDDING_MODEL` unset and do not use `--require-foundry-embeddings`. The project can still require the cached `phi3.5` Foundry model for generation with `--require-foundry-generation`.
 
 ### Option 3: Compare Retrieval Modes
 
@@ -193,7 +202,7 @@ The start script runs:
 
 ```bash
 foundry server start --port 39839 --idle-timeout 0
-foundry model load qwen3-0.6b
+foundry model load phi3.5
 ```
 
 The Python app reads:
@@ -208,10 +217,10 @@ PowerShell Foundry environment setup:
 
 ```powershell
 $env:FOUNDRY_LOCAL_ENDPOINT = "http://127.0.0.1:39839"
-$env:FOUNDRY_LOCAL_MODEL = "qwen3-0.6b"
+$env:FOUNDRY_LOCAL_MODEL = "phi3.5"
 $env:FOUNDRY_LOCAL_EMBEDDING_MODEL = "your-embedding-model"
 python app.py --reindex
-python app.py --ask "Which country has Brasília as its capital?"
+python app.py --ask "Which country has Brasília as its capital?" --require-foundry-generation
 ```
 
 If the embedding model is not configured, the app uses its built-in local hashed embedding method so the project remains runnable on any Python 3 installation.
@@ -228,9 +237,11 @@ If Foundry Local starts but the app still uses fallback mode, run:
 
 ```powershell
 $env:FOUNDRY_LOCAL_ENDPOINT = "http://127.0.0.1:39839"
-$env:FOUNDRY_LOCAL_MODEL = "qwen3-0.6b"
-python app.py --ask "What is the capital of Brazil?"
+$env:FOUNDRY_LOCAL_MODEL = "phi3.5"
+python app.py --ask "What is the capital of Brazil?" --require-foundry-generation
 ```
+
+If this prints `Foundry configuration error`, check that the Foundry server is still running, `FOUNDRY_LOCAL_ENDPOINT` is set to `http://127.0.0.1:39839`, and `FOUNDRY_LOCAL_MODEL` matches the exact cached Phi 3.5 model name.
 
 If you changed the knowledge base but answers still look old, run:
 
@@ -258,11 +269,11 @@ On the Lenovo laptop with Foundry Local:
 git clone git@github.com:ozanersoz/local-rag-ai-assistant.git
 cd local-rag-ai-assistant
 foundry server start --port 39839 --idle-timeout 0
-foundry model load qwen3-0.6b
+foundry model load phi3.5
 $env:FOUNDRY_LOCAL_ENDPOINT = "http://127.0.0.1:39839"
-$env:FOUNDRY_LOCAL_MODEL = "qwen3-0.6b"
+$env:FOUNDRY_LOCAL_MODEL = "phi3.5"
 python app.py --reindex
-python app.py --ask "Which countries in South America are landlocked?"
+python app.py --ask "Which countries in South America are landlocked?" --require-foundry-generation
 ```
 
 Generated files such as `rag_index.sqlite`, `.env`, and `__pycache__/` are intentionally ignored by Git. Rebuild the SQLite index on each machine with:

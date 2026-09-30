@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import argparse
+import sys
 from pathlib import Path
 
+from rag_assistant.embeddings import FoundryEmbeddingError
+from rag_assistant.generator import FoundryGenerationError
 from rag_assistant.generator import generate_answer
 from rag_assistant.indexer import build_index
 from rag_assistant.retriever import retrieve
@@ -28,41 +31,63 @@ def main() -> None:
         action="store_true",
         help="fail unless Foundry Local provides embeddings",
     )
+    parser.add_argument(
+        "--require-foundry-generation",
+        action="store_true",
+        help="fail unless Foundry Local generates the final answer",
+    )
     args = parser.parse_args()
 
-    if args.reindex or not DB_PATH.exists():
-        stats = build_index(
-            DATA_DIR,
-            DB_PATH,
-            require_foundry_embeddings=args.require_foundry_embeddings,
-        )
-        print(
-            f"Indexed {stats['documents']} documents and {stats['chunks']} chunks "
-            f"into {DB_PATH.name} using {stats['embedding_provider']} embeddings."
-        )
+    try:
+        if args.reindex or not DB_PATH.exists():
+            stats = build_index(
+                DATA_DIR,
+                DB_PATH,
+                require_foundry_embeddings=args.require_foundry_embeddings,
+            )
+            print(
+                f"Indexed {stats['documents']} documents and {stats['chunks']} chunks "
+                f"into {DB_PATH.name} using {stats['embedding_provider']} embeddings."
+            )
 
-    if args.ask:
-        contexts = retrieve(
-            DB_PATH,
-            args.ask,
-            mode=args.retrieval,
-            require_foundry_embeddings=args.require_foundry_embeddings,
-        )
-        print(generate_answer(args.ask, contexts))
-        return
+        if args.ask:
+            contexts = retrieve(
+                DB_PATH,
+                args.ask,
+                mode=args.retrieval,
+                require_foundry_embeddings=args.require_foundry_embeddings,
+            )
+            print(
+                generate_answer(
+                    args.ask,
+                    contexts,
+                    require_foundry_generation=args.require_foundry_generation,
+                )
+            )
+            return
 
-    print(f"Local RAG assistant ({args.retrieval} retrieval). Type a question, or 'quit' to exit.")
-    while True:
-        question = input("\nQuestion> ").strip()
-        if question.lower() in {"q", "quit", "exit"}:
-            break
-        contexts = retrieve(
-            DB_PATH,
-            question,
-            mode=args.retrieval,
-            require_foundry_embeddings=args.require_foundry_embeddings,
-        )
-        print("\n" + generate_answer(question, contexts))
+        print(f"Local RAG assistant ({args.retrieval} retrieval). Type a question, or 'quit' to exit.")
+        while True:
+            question = input("\nQuestion> ").strip()
+            if question.lower() in {"q", "quit", "exit"}:
+                break
+            contexts = retrieve(
+                DB_PATH,
+                question,
+                mode=args.retrieval,
+                require_foundry_embeddings=args.require_foundry_embeddings,
+            )
+            print(
+                "\n"
+                + generate_answer(
+                    question,
+                    contexts,
+                    require_foundry_generation=args.require_foundry_generation,
+                )
+            )
+    except (FoundryEmbeddingError, FoundryGenerationError) as exc:
+        print(f"Foundry configuration error: {exc}", file=sys.stderr)
+        raise SystemExit(2)
 
 
 if __name__ == "__main__":

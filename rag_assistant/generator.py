@@ -13,6 +13,10 @@ SYSTEM_PROMPT = (
 )
 
 
+class FoundryGenerationError(RuntimeError):
+    """Raised when Foundry generation is required but unavailable."""
+
+
 CAPITALS = {
     "argentina": "Buenos Aires",
     "bolivia": "Sucre is the constitutional capital, while La Paz is the seat of government",
@@ -83,10 +87,18 @@ def direct_fact_answer(question: str, contexts: list[dict[str, object]]) -> str 
     return None
 
 
-def answer_with_foundry(question: str, contexts: list[dict[str, object]]) -> str | None:
+def answer_with_foundry(
+    question: str,
+    contexts: list[dict[str, object]],
+    require_foundry: bool = False,
+) -> str | None:
     endpoint = os.getenv("FOUNDRY_LOCAL_ENDPOINT", "").rstrip("/")
-    model = os.getenv("FOUNDRY_LOCAL_MODEL", "local-model")
+    model = os.getenv("FOUNDRY_LOCAL_MODEL", "phi3.5")
     if not endpoint:
+        if require_foundry:
+            raise FoundryGenerationError(
+                "Foundry generation was required, but FOUNDRY_LOCAL_ENDPOINT is not set."
+            )
         return None
 
     context_text = "\n\n".join(
@@ -115,7 +127,11 @@ def answer_with_foundry(question: str, contexts: list[dict[str, object]]) -> str
         with urllib.request.urlopen(request, timeout=120) as response:
             data = json.loads(response.read().decode("utf-8"))
         return data["choices"][0]["message"]["content"].strip()
-    except Exception:
+    except Exception as exc:
+        if require_foundry:
+            raise FoundryGenerationError(
+                f"Foundry generation was required, but the local model request failed: {exc}"
+            ) from exc
         return None
 
 
@@ -138,8 +154,16 @@ def answer_extractive(question: str, contexts: list[dict[str, object]]) -> str:
     )
 
 
-def generate_answer(question: str, contexts: list[dict[str, object]]) -> str:
-    foundry_answer = answer_with_foundry(question, contexts)
+def generate_answer(
+    question: str,
+    contexts: list[dict[str, object]],
+    require_foundry_generation: bool = False,
+) -> str:
+    foundry_answer = answer_with_foundry(
+        question,
+        contexts,
+        require_foundry=require_foundry_generation,
+    )
     if foundry_answer:
         return foundry_answer
     return answer_extractive(question, contexts)

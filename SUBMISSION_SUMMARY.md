@@ -15,6 +15,7 @@ Local RAG AI Assistant for South American country knowledge with Microsoft Found
 - Vector embeddings and cosine-similarity retrieval
 - Optional keyword retrieval mode
 - Optional Foundry Local chat-completions integration
+- Required Foundry generation mode with `--require-foundry-generation`
 - Optional Foundry Local embeddings integration
 - Windows-friendly Foundry Local command instructions
 - Required Foundry embedding mode with `--require-foundry-embeddings`
@@ -28,7 +29,7 @@ Local RAG AI Assistant for South American country knowledge with Microsoft Found
 
 ## Runtime Note
 
-Foundry Local itself must be installed separately. This project includes README and `FOUNDRY_LOCAL_SETUP.md` commands for starting the local server, loading a model, configuring environment variables, and running the app on Windows.
+Foundry Local itself must be installed separately. This project includes README and `FOUNDRY_LOCAL_SETUP.md` commands for starting the local server, loading the cached `phi3.5` model, configuring environment variables, and running the app on Windows.
 
 ## Quick Demo Command
 
