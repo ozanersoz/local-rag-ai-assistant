@@ -67,6 +67,14 @@ def foundry_embedding(text: str) -> list[float] | None:
             f"HTTP {exc.code} from {endpoint}/v1/embeddings using model {model}: {body}"
         )
         return None
+    except urllib.error.URLError as exc:
+        LAST_FOUNDRY_EMBEDDING_ERROR = (
+            f"Connection error from {endpoint}/v1/embeddings using model {model}: {exc}. "
+            "If this is WinError 10061, Foundry Local is not listening at that endpoint. "
+            "Start Foundry Local, copy the exact endpoint it prints, and set "
+            "FOUNDRY_LOCAL_ENDPOINT in the same terminal where you run the app."
+        )
+        return None
     except Exception as exc:
         LAST_FOUNDRY_EMBEDDING_ERROR = (
             f"{type(exc).__name__} from {endpoint}/v1/embeddings using model {model}: {exc}"

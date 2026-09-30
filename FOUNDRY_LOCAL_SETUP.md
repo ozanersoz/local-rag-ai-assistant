@@ -71,6 +71,26 @@ python app.py --ask "Which countries in South America are landlocked?"
 
 Foundry embeddings and Foundry answer generation are required by default. The app fails instead of using fallback behavior unless `--allow-fallback` is explicitly provided.
 
+## WinError 10061 / Connection Refused
+
+`WinError 10061` means Python reached the network stack, but no Foundry server accepted the connection at `FOUNDRY_LOCAL_ENDPOINT`.
+
+Check these in order:
+
+1. Keep the terminal running `foundry server start` open.
+2. Copy the exact endpoint printed by Foundry Local. Do not reuse an old port.
+3. Set `FOUNDRY_LOCAL_ENDPOINT` in the same terminal where you run `python app.py`.
+4. Run `python diagnose_foundry.py` before `python app.py --reindex`.
+
+PowerShell example:
+
+```powershell
+$env:FOUNDRY_LOCAL_ENDPOINT = "http://127.0.0.1:PORT_FROM_FOUNDRY"
+$env:FOUNDRY_LOCAL_MODEL = "phi-3.5-mini"
+$env:FOUNDRY_LOCAL_EMBEDDING_MODEL = "qwen3-embedding-0.6b"
+python diagnose_foundry.py
+```
+
 ## Foundry Embeddings Are Required
 
 The worksheet explicitly asks for the Foundry Local embedding model for both document embeddings and question embeddings. This project therefore uses Foundry embeddings by default. Reindexing fails if the Foundry embedding endpoint is not working.

@@ -7,6 +7,15 @@ import urllib.error
 import urllib.request
 
 
+def connection_help(endpoint: str) -> str:
+    return (
+        f"Could not connect to {endpoint}. On Windows, WinError 10061 means "
+        "the connection was refused because no Foundry server is listening at "
+        "that address. Start Foundry Local, copy the exact endpoint it prints, "
+        "and set FOUNDRY_LOCAL_ENDPOINT in the same terminal where you run this app."
+    )
+
+
 def post_json(url: str, payload: dict[str, object]) -> dict[str, object]:
     request = urllib.request.Request(
         url,
@@ -43,6 +52,10 @@ def main() -> int:
     except urllib.error.HTTPError as exc:
         print(f"Embedding HTTP error {exc.code}: {exc.read().decode('utf-8', errors='replace')}")
         return 1
+    except urllib.error.URLError as exc:
+        print(f"Embedding connection error: {exc}")
+        print(connection_help(endpoint))
+        return 1
     except Exception as exc:
         print(f"Embedding request failed: {type(exc).__name__}: {exc}")
         return 1
@@ -60,6 +73,10 @@ def main() -> int:
         print(f"Chat OK: {content}")
     except urllib.error.HTTPError as exc:
         print(f"Chat HTTP error {exc.code}: {exc.read().decode('utf-8', errors='replace')}")
+        return 1
+    except urllib.error.URLError as exc:
+        print(f"Chat connection error: {exc}")
+        print(connection_help(endpoint))
         return 1
     except Exception as exc:
         print(f"Chat request failed: {type(exc).__name__}: {exc}")
